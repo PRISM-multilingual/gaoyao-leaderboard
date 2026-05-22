@@ -90,7 +90,7 @@
     <div class="mx-auto px-6 lg:px-10 py-1.5 flex items-center gap-2 text-xs" style="max-width: 1680px; color: #7F1D1D;">
       <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: var(--hw-red);"></span>
       <span><b>数据截止</b> · 2025 年 11 月</span>
-      <span class="text-gray-400 ml-1">— 后续提交的模型经审核后即时上榜</span>
+      
     </div>
   </div>
 
@@ -134,7 +134,7 @@
       <div class="mt-8 px-2 text-[11px] text-gray-500 leading-relaxed">
         <p><b class="text-gray-700">26 languages · 51 nations</b></p>
         <p class="mt-1">10 sub-layers · 3 cultural layers</p>
-        <p class="mt-2">自动评测覆盖 5 个真客观子任务；主观与文化深度子集需 Judge 模型，由维护方运行。新提交需管理员审核通过才上榜。</p>
+        
       </div>
     </aside>
 
@@ -191,37 +191,9 @@
     </ul>
   </section>
 
-  <section>
-    <h2 class="text-base font-bold mb-2" style="color: var(--ink);">自动评测覆盖范围</h2>
-    <p class="text-gray-700 text-xs mb-2">用户通过 API 提交模型时，我们自动评测以下 5 个真客观子任务（规则化抽答，无需 Judge）：</p>
-    <div class="flex flex-wrap gap-2 mb-3">
-      
-      <span class="pill pill-open">Belebele</span>
-      
-      <span class="pill pill-open">MGSM</span>
-      
-      <span class="pill pill-open">MMMLU</span>
-      
-      <span class="pill pill-open">INCLUDE</span>
-      
-      <span class="pill pill-open">Flores-101</span>
-      
-    </div>
-    <p class="text-gray-700 text-xs">
-      需要 Judge 模型的子集 <span class="pill pill-judge">S-AlpacaEval</span> <span class="pill pill-judge">S-MT-Bench</span> <span class="pill pill-judge">SuperBLEnD</span> <span class="pill pill-judge">SAGE</span> <span class="pill pill-judge">CultureScope</span> 由维护方运行，不进入用户提交流程。
-    </p>
-  </section>
+  
 
-  <section>
-    <h2 class="text-base font-bold mb-2" style="color: var(--ink);">提交流程</h2>
-    <ol class="list-decimal pl-6 space-y-1 text-gray-700">
-      <li>提交 OpenAI Chat Completions 兼容 API <code class="bg-gray-100 px-1 rounded">api_base</code> + key</li>
-      <li>静态校验：schema / 字符集 / 长度；SSRF 拦截 loopback / 内网 / metadata 主机</li>
-      <li>限流：每 IP 4 次/分钟 · 20 次/小时</li>
-      <li>自动在客观子任务上评测，记录逐语言得分</li>
-      <li>维护方审核结果，通过后发布到公开榜单</li>
-    </ol>
-  </section>
+  
 
   <section>
     <h2 class="text-base font-bold mb-2" style="color: var(--ink);">引用</h2>

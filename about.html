@@ -90,7 +90,7 @@
     <div class="mx-auto px-6 lg:px-10 py-1.5 flex items-center gap-2 text-xs" style="max-width: 1680px; color: #7F1D1D;">
       <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: var(--hw-red);"></span>
       <span><b>Data cutoff</b> · November 2025</span>
-      <span class="text-gray-400 ml-1">— newly submitted models appear after admin review</span>
+      
     </div>
   </div>
 
@@ -134,7 +134,7 @@
       <div class="mt-8 px-2 text-[11px] text-gray-500 leading-relaxed">
         <p><b class="text-gray-700">26 languages · 51 nations</b></p>
         <p class="mt-1">10 sub-layers · 3 cultural layers</p>
-        <p class="mt-2">Auto-eval covers the 5 truly objective sub-tasks; subjective and culturally-grounded sets require a judge LLM and are run by the maintainers. New submissions appear after admin review.</p>
+        
       </div>
     </aside>
 
@@ -193,37 +193,9 @@
     </ul>
   </section>
 
-  <section>
-    <h2 class="text-base font-bold mb-2" style="color: var(--ink);">Auto-eval Coverage</h2>
-    <p class="text-gray-700 text-xs mb-2">When a user submits a model API, we automatically score it on the 5 truly objective sub-tasks (rule-based answer extraction, no judge LLM needed):</p>
-    <div class="flex flex-wrap gap-2 mb-3">
-      
-      <span class="pill pill-open">Belebele</span>
-      
-      <span class="pill pill-open">MGSM</span>
-      
-      <span class="pill pill-open">MMMLU</span>
-      
-      <span class="pill pill-open">INCLUDE</span>
-      
-      <span class="pill pill-open">Flores-101</span>
-      
-    </div>
-    <p class="text-gray-700 text-xs">
-      Subsets that require a judge LLM — <span class="pill pill-judge">S-AlpacaEval</span> <span class="pill pill-judge">S-MT-Bench</span> <span class="pill pill-judge">SuperBLEnD</span> <span class="pill pill-judge">SAGE</span> <span class="pill pill-judge">CultureScope</span> — are run by the maintainers, not in the user-submission path.
-    </p>
-  </section>
+  
 
-  <section>
-    <h2 class="text-base font-bold mb-2" style="color: var(--ink);">Submission Pipeline</h2>
-    <ol class="list-decimal pl-6 space-y-1 text-gray-700">
-      <li>Submit an OpenAI Chat Completions–compatible <code class="bg-gray-100 px-1 rounded">api_base</code> + key</li>
-      <li>Static validation: schema, charset, length; SSRF guard refuses loopback / private / link-local / metadata hosts</li>
-      <li>Rate-limited 4/min · 20/hour per IP</li>
-      <li>Automatic evaluation on the objective sub-tasks; per-language scores are recorded</li>
-      <li>Maintainer reviews the result and publishes it to the public leaderboard</li>
-    </ol>
-  </section>
+  
 
   <section>
     <h2 class="text-base font-bold mb-2" style="color: var(--ink);">Citation</h2>
