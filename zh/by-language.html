@@ -1,0 +1,5702 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>按语言榜 · GaoYao</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="/gaoyao-leaderboard/static/logo/favicon.png?v=2">
+  <style>
+    :root {
+      --hw-red:    #B91C1C;   /* deeper, less saturated than HW red */
+      --hw-red-2:  #7F1D1D;
+      --ink:       #18181B;
+      --ink-2:     #3F3F46;
+      --muted:     #71717A;
+      --line:      #E4E4E7;
+      --line-2:    #F4F4F5;
+      --bg:        #FAFAF9;
+      --paper:     #FFFFFF;
+    }
+    html { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+    [x-cloak] { display: none !important; }
+    body { background: var(--bg); color: var(--ink); font-size: 14px; line-height: 1.5; }
+    .font-serif-zh { font-family: 'Noto Serif SC', 'Songti SC', serif; letter-spacing: 0.02em; }
+    .font-mono    { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+    /* "GaoYao" wordmark */
+    .wordmark { font-family: 'Noto Serif SC', serif; font-weight: 700; letter-spacing: 0.04em; }
+
+    /* topbar */
+    .topbar { background: var(--paper); border-bottom: 1px solid var(--line); }
+    .topbar-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 32px; }
+    .nav-pill { padding: 6px 14px; font-size: 13px; color: var(--ink-2); border-radius: 999px; transition: all 0.15s; }
+    .nav-pill:hover { background: var(--line-2); color: var(--ink); }
+    .nav-pill.active { background: var(--ink); color: white; }
+    .btn-primary { background: var(--hw-red); color: white; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; transition: all 0.15s; }
+    .btn-primary:hover { background: var(--hw-red-2); }
+
+    /* side rail */
+    .rail { position: sticky; top: 24px; align-self: start; }
+    .rail-section { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 20px; margin-bottom: 8px; padding: 0 12px; }
+    .rail-link { display: block; padding: 9px 14px; border-radius: 6px; font-size: 14.5px; color: var(--ink-2); transition: all 0.12s; }
+    .rail-link:hover { background: var(--line-2); color: var(--ink); }
+    .rail-link.active { background: rgba(185,28,28,0.08); color: var(--hw-red); font-weight: 600; box-shadow: inset 2px 0 0 var(--hw-red); }
+
+    /* cards */
+    .card { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; }
+    .card-tight { padding: 16px 20px; }
+    .card-pad   { padding: 24px 28px; }
+
+    /* heading rhythm */
+    h1.page { font-family: 'Noto Serif SC', serif; font-size: 28px; font-weight: 700; letter-spacing: -0.005em; color: var(--ink); margin: 0; }
+    .page-lede { font-size: 14px; color: var(--muted); margin-top: 6px; line-height: 1.55; max-width: 80ch; }
+
+    /* tables */
+    table.lb { border-collapse: separate; border-spacing: 0; width: 100%; }
+    table.lb th, table.lb td { padding: 9px 14px; font-size: 13px; vertical-align: middle; }
+    table.lb thead th { font-weight: 600; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); background: var(--line-2); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 1; }
+    table.lb tbody tr:hover { background: rgba(185,28,28,0.025); }
+    table.lb tbody tr + tr td { border-top: 1px solid var(--line-2); }
+    .score-cell { font-variant-numeric: tabular-nums; }
+    .score-top { font-weight: 700; color: var(--hw-red); }
+
+    /* pills */
+    .pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 11px; font-weight: 500; border-radius: 999px; line-height: 1.4; }
+    .pill-open    { background: #ECFDF5; color: #047857; }
+    .pill-closed  { background: #F4F4F5; color: #52525B; }
+    .pill-judge   { background: #FEF3C7; color: #92400E; }
+    .pill-think   { background: #FAF5FF; color: #6B21A8; }
+    .pill-tier-H  { background: #ECFDF5; color: #047857; }
+    .pill-tier-M  { background: #FEFCE8; color: #854D0E; }
+    .pill-tier-L  { background: #FEE2E2; color: #991B1B; }
+
+    /* score bar */
+    .bar-track { background: var(--line-2); border-radius: 3px; height: 8px; overflow: hidden; }
+    .bar-fill  { background: var(--hw-red); height: 100%; border-radius: 3px; }
+
+    /* footer */
+    footer { background: var(--paper); border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0; font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <!-- data-cutoff banner -->
+  <div style="background: linear-gradient(90deg, #FEF2F2 0%, #FFFFFF 60%); border-bottom: 1px solid #FCE7E7;">
+    <div class="mx-auto px-6 lg:px-10 py-1.5 flex items-center gap-2 text-xs" style="max-width: 1680px; color: #7F1D1D;">
+      <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: var(--hw-red);"></span>
+      <span><b>数据截止</b> · 2025 年 11 月</span>
+      <span class="text-gray-400 ml-1">— 后续提交的模型经审核后即时上榜</span>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="topbar-inner max-w-none">
+      <a href="/gaoyao-leaderboard/zh/" class="flex items-center gap-3">
+        <span class="inline-block w-1 h-9" style="background: var(--hw-red);"></span>
+        <span>
+          <div class="wordmark text-xl text-black">皋陶 · GaoYao</div>
+          <div class="text-[11px] text-gray-500 -mt-1">Multilingual & Multicultural LLM Leaderboard · ACL 2026</div>
+        </span>
+      </a>
+      <nav class="flex items-center gap-2">
+        <a href="https://arxiv.org/abs/2604.20225" class="nav-pill">Paper</a>
+        <a href="https://github.com/lunyiliu/GaoYao" class="nav-pill">GitHub</a>
+        <a href="/gaoyao-leaderboard/zh/about.html" class="nav-pill ">About</a>
+        <!-- language toggle -->
+        <a href="/gaoyao-leaderboard/by-language.html" class="nav-pill" title="Switch language">EN</a>
+        
+      </nav>
+    </div>
+  </header>
+
+  <div class="mx-auto px-6 lg:px-10 py-8 grid grid-cols-1 md:grid-cols-12 gap-8" style="max-width: 1680px;">
+    <aside class="md:col-span-3 lg:col-span-2 rail">
+      <div class="rail-section">视图</div>
+      
+      <a href="/gaoyao-leaderboard/zh/" class="rail-link ">总榜</a>
+      <a href="/gaoyao-leaderboard/zh/by-language.html" class="rail-link active">按语言榜</a>
+      <a href="/gaoyao-leaderboard/zh/cultural-layer.html" class="rail-link ">三层文化框架</a>
+
+      <div class="rail-section">洞察</div>
+      <a href="/gaoyao-leaderboard/zh/finding/f1.html" class="rail-link ">模型专长</a>
+      <a href="/gaoyao-leaderboard/zh/finding/f2.html" class="rail-link ">语言鸿沟</a>
+      <a href="/gaoyao-leaderboard/zh/finding/f3.html" class="rail-link ">任务饱和度</a>
+      <a href="/gaoyao-leaderboard/zh/finding/f4.html" class="rail-link ">Thinking 增益</a>
+
+      <div class="rail-section">其他</div>
+      <a href="/gaoyao-leaderboard/zh/about.html" class="rail-link ">关于</a>
+
+      <div class="mt-8 px-2 text-[11px] text-gray-500 leading-relaxed">
+        <p><b class="text-gray-700">26 languages · 51 nations</b></p>
+        <p class="mt-1">10 sub-layers · 3 cultural layers</p>
+        <p class="mt-2">自动评测覆盖 5 个真客观子任务；主观与文化深度子集需 Judge 模型，由维护方运行。新提交需管理员审核通过才上榜。</p>
+      </div>
+    </aside>
+
+    <main class="md:col-span-9 lg:col-span-10 min-w-0">
+      
+<div class="mb-6">
+  <h1 class="page">按语言榜</h1>
+  <p class="page-lede">每行为一个模型，每列为 26 种语言之一。单元格为该模型在该语言上所有子任务的平均分——一眼看出每个模型的强项/弱项语种。</p>
+</div>
+
+
+
+
+
+
+
+
+<div class="mb-4 flex items-baseline justify-between">
+  <h2 class="font-bold" style="font-size: 17px; color: var(--ink);">
+    <span class="inline-block w-1 h-4 mr-2 align-middle" style="background: #16a34a;"></span>
+    🟢 开源榜
+  </h2>
+  <span class="text-xs text-gray-500">12 个开源</span>
+</div>
+<div class="card overflow-x-auto mb-8">
+  <table class="lb w-full" style="font-size: 12px;">
+    <thead>
+      <tr>
+        <th class="text-left sticky-col" style="background: #fafafa;">#</th>
+        <th class="text-left sticky-col" style="left: 38px; background: #fafafa; min-width: 180px;">模型</th>
+        <th class="text-right sticky-col" style="left: 218px; background: #fafafa; min-width: 64px;">均值</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Arabic</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Bengal</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Chines</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Czech</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Dutch</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Englis</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">French</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">German</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Greek</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Hindi</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Indone</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Italia</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Japane</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Korean</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Malay</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Polish</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Portug</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Russia</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Spanis</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Swahil</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Tagalo</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Telugu</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Thai</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Turkis</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Vietna</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Yoruba</th>
+        
+      </tr>
+    </thead>
+    <tbody>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">1</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/deepseek-r1.html" class="font-medium hover:underline" style="color: var(--ink);">DeepSeek-R1</a>
+          <span class="pill pill-think ml-1">think</span>
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">81.0</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(93, 60%, 96%); color: hsl(93, 60%, 22%);">
+            78
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(104, 60%, 96%); color: hsl(104, 60%, 22%);">
+            87
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(100, 60%, 96%); color: hsl(100, 60%, 22%);">
+            84
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(94, 60%, 96%); color: hsl(94, 60%, 22%);">
+            79
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(95, 60%, 96%); color: hsl(95, 60%, 22%);">
+            80
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(101, 60%, 96%); color: hsl(101, 60%, 22%);">
+            84
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(98, 60%, 96%); color: hsl(98, 60%, 22%);">
+            82
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(95, 60%, 96%); color: hsl(95, 60%, 22%);">
+            80
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(96, 60%, 96%); color: hsl(96, 60%, 22%);">
+            80
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(102, 60%, 96%); color: hsl(102, 60%, 22%);">
+            86
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(97, 60%, 96%); color: hsl(97, 60%, 22%);">
+            81
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(97, 60%, 96%); color: hsl(97, 60%, 22%);">
+            82
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(97, 60%, 96%); color: hsl(97, 60%, 22%);">
+            82
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(93, 60%, 96%); color: hsl(93, 60%, 22%);">
+            78
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(97, 60%, 96%); color: hsl(97, 60%, 22%);">
+            81
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(97, 60%, 96%); color: hsl(97, 60%, 22%);">
+            81
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(97, 60%, 96%); color: hsl(97, 60%, 22%);">
+            81
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(99, 60%, 96%); color: hsl(99, 60%, 22%);">
+            83
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(101, 60%, 96%); color: hsl(101, 60%, 22%);">
+            85
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(103, 60%, 96%); color: hsl(103, 60%, 22%);">
+            86
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(97, 60%, 96%); color: hsl(97, 60%, 22%);">
+            81
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(104, 60%, 96%); color: hsl(104, 60%, 22%);">
+            87
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(96, 60%, 96%); color: hsl(96, 60%, 22%);">
+            81
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(91, 60%, 96%); color: hsl(91, 60%, 22%);">
+            76
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(94, 60%, 96%); color: hsl(94, 60%, 22%);">
+            78
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(77, 60%, 96%); color: hsl(77, 60%, 22%);">
+            65
+          </td>
+        
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">2</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/qwen3-235b-a22b-instruct.html" class="font-medium hover:underline" style="color: var(--ink);">Qwen3-235B-A22B</a>
+          
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">73.1</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(84, 60%, 96%); color: hsl(84, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(95, 60%, 96%); color: hsl(95, 60%, 22%);">
+            79
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(106, 60%, 96%); color: hsl(106, 60%, 22%);">
+            89
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(85, 60%, 96%); color: hsl(85, 60%, 22%);">
+            71
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(84, 60%, 96%); color: hsl(84, 60%, 22%);">
+            71
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(103, 60%, 96%); color: hsl(103, 60%, 22%);">
+            86
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(89, 60%, 96%); color: hsl(89, 60%, 22%);">
+            75
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(87, 60%, 96%); color: hsl(87, 60%, 22%);">
+            73
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(80, 60%, 96%); color: hsl(80, 60%, 22%);">
+            67
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(89, 60%, 96%); color: hsl(89, 60%, 22%);">
+            75
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(88, 60%, 96%); color: hsl(88, 60%, 22%);">
+            74
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(89, 60%, 96%); color: hsl(89, 60%, 22%);">
+            75
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(90, 60%, 96%); color: hsl(90, 60%, 22%);">
+            76
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(85, 60%, 96%); color: hsl(85, 60%, 22%);">
+            71
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(85, 60%, 96%); color: hsl(85, 60%, 22%);">
+            72
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(84, 60%, 96%); color: hsl(84, 60%, 22%);">
+            71
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(89, 60%, 96%); color: hsl(89, 60%, 22%);">
+            74
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(87, 60%, 96%); color: hsl(87, 60%, 22%);">
+            73
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(95, 60%, 96%); color: hsl(95, 60%, 22%);">
+            80
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(89, 60%, 96%); color: hsl(89, 60%, 22%);">
+            74
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(83, 60%, 96%); color: hsl(83, 60%, 22%);">
+            69
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(97, 60%, 96%); color: hsl(97, 60%, 22%);">
+            82
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(86, 60%, 96%); color: hsl(86, 60%, 22%);">
+            72
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(85, 60%, 96%); color: hsl(85, 60%, 22%);">
+            71
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(50, 60%, 96%); color: hsl(50, 60%, 22%);">
+            42
+          </td>
+        
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">3</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/930-pangu-718b-sft-0shot.html" class="font-medium hover:underline" style="color: var(--ink);">openPangu-Ultra-MoE-718B-V1.1</a>
+          
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">71.7</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(83, 60%, 96%); color: hsl(83, 60%, 22%);">
+            69
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(100, 60%, 96%); color: hsl(100, 60%, 22%);">
+            84
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(105, 60%, 96%); color: hsl(105, 60%, 22%);">
+            88
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(75, 60%, 96%); color: hsl(75, 60%, 22%);">
+            63
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(78, 60%, 96%); color: hsl(78, 60%, 22%);">
+            66
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(103, 60%, 96%); color: hsl(103, 60%, 22%);">
+            86
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(88, 60%, 96%); color: hsl(88, 60%, 22%);">
+            74
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(84, 60%, 96%); color: hsl(84, 60%, 22%);">
+            71
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(80, 60%, 96%); color: hsl(80, 60%, 22%);">
+            67
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(101, 60%, 96%); color: hsl(101, 60%, 22%);">
+            84
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(84, 60%, 96%); color: hsl(84, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(86, 60%, 96%); color: hsl(86, 60%, 22%);">
+            72
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            66
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(76, 60%, 96%); color: hsl(76, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(74, 60%, 96%); color: hsl(74, 60%, 22%);">
+            62
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(83, 60%, 96%); color: hsl(83, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(84, 60%, 96%); color: hsl(84, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(93, 60%, 96%); color: hsl(93, 60%, 22%);">
+            78
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(99, 60%, 96%); color: hsl(99, 60%, 22%);">
+            83
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(78, 60%, 96%); color: hsl(78, 60%, 22%);">
+            65
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(107, 60%, 96%); color: hsl(107, 60%, 22%);">
+            89
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(77, 60%, 96%); color: hsl(77, 60%, 22%);">
+            65
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(77, 60%, 96%); color: hsl(77, 60%, 22%);">
+            65
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(75, 60%, 96%); color: hsl(75, 60%, 22%);">
+            63
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(73, 60%, 96%); color: hsl(73, 60%, 22%);">
+            61
+          </td>
+        
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">4</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/deepseek-v3.1-mindie.html" class="font-medium hover:underline" style="color: var(--ink);">DeepSeek-V3.1</a>
+          
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">70.8</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            66
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(101, 60%, 96%); color: hsl(101, 60%, 22%);">
+            85
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(106, 60%, 96%); color: hsl(106, 60%, 22%);">
+            89
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(80, 60%, 96%); color: hsl(80, 60%, 22%);">
+            67
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(76, 60%, 96%); color: hsl(76, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(103, 60%, 96%); color: hsl(103, 60%, 22%);">
+            86
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(85, 60%, 96%); color: hsl(85, 60%, 22%);">
+            72
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(77, 60%, 96%); color: hsl(77, 60%, 22%);">
+            65
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(98, 60%, 96%); color: hsl(98, 60%, 22%);">
+            82
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(82, 60%, 96%); color: hsl(82, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(84, 60%, 96%); color: hsl(84, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(82, 60%, 96%); color: hsl(82, 60%, 22%);">
+            69
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(77, 60%, 96%); color: hsl(77, 60%, 22%);">
+            65
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(74, 60%, 96%); color: hsl(74, 60%, 22%);">
+            62
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(80, 60%, 96%); color: hsl(80, 60%, 22%);">
+            67
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(86, 60%, 96%); color: hsl(86, 60%, 22%);">
+            72
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(90, 60%, 96%); color: hsl(90, 60%, 22%);">
+            76
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(97, 60%, 96%); color: hsl(97, 60%, 22%);">
+            81
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(76, 60%, 96%); color: hsl(76, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(103, 60%, 96%); color: hsl(103, 60%, 22%);">
+            86
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(75, 60%, 96%); color: hsl(75, 60%, 22%);">
+            63
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(76, 60%, 96%); color: hsl(76, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(77, 60%, 96%); color: hsl(77, 60%, 22%);">
+            65
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(69, 60%, 96%); color: hsl(69, 60%, 22%);">
+            58
+          </td>
+        
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">5</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/qwen3-14b-think.html" class="font-medium hover:underline" style="color: var(--ink);">Qwen3-14B (think)</a>
+          <span class="pill pill-think ml-1">think</span>
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">70.4</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(80, 60%, 96%); color: hsl(80, 60%, 22%);">
+            67
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(98, 60%, 96%); color: hsl(98, 60%, 22%);">
+            82
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(108, 60%, 96%); color: hsl(108, 60%, 22%);">
+            90
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(75, 60%, 96%); color: hsl(75, 60%, 22%);">
+            63
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(82, 60%, 96%); color: hsl(82, 60%, 22%);">
+            69
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(107, 60%, 96%); color: hsl(107, 60%, 22%);">
+            90
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(85, 60%, 96%); color: hsl(85, 60%, 22%);">
+            72
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(86, 60%, 96%); color: hsl(86, 60%, 22%);">
+            72
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            67
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(93, 60%, 96%); color: hsl(93, 60%, 22%);">
+            78
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(82, 60%, 96%); color: hsl(82, 60%, 22%);">
+            69
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(86, 60%, 96%); color: hsl(86, 60%, 22%);">
+            72
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(87, 60%, 96%); color: hsl(87, 60%, 22%);">
+            73
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            67
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            66
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(83, 60%, 96%); color: hsl(83, 60%, 22%);">
+            69
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(84, 60%, 96%); color: hsl(84, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(91, 60%, 96%); color: hsl(91, 60%, 22%);">
+            76
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(78, 60%, 96%); color: hsl(78, 60%, 22%);">
+            65
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(77, 60%, 96%); color: hsl(77, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(101, 60%, 96%); color: hsl(101, 60%, 22%);">
+            84
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(84, 60%, 96%); color: hsl(84, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(77, 60%, 96%); color: hsl(77, 60%, 22%);">
+            65
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(77, 60%, 96%); color: hsl(77, 60%, 22%);">
+            65
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(47, 60%, 96%); color: hsl(47, 60%, 22%);">
+            39
+          </td>
+        
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">6</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/qwen3-8b-think.html" class="font-medium hover:underline" style="color: var(--ink);">Qwen3-8B (think)</a>
+          <span class="pill pill-think ml-1">think</span>
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">67.7</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(78, 60%, 96%); color: hsl(78, 60%, 22%);">
+            65
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(95, 60%, 96%); color: hsl(95, 60%, 22%);">
+            80
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(106, 60%, 96%); color: hsl(106, 60%, 22%);">
+            88
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(74, 60%, 96%); color: hsl(74, 60%, 22%);">
+            62
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(78, 60%, 96%); color: hsl(78, 60%, 22%);">
+            66
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(106, 60%, 96%); color: hsl(106, 60%, 22%);">
+            89
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(83, 60%, 96%); color: hsl(83, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(84, 60%, 96%); color: hsl(84, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(76, 60%, 96%); color: hsl(76, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(87, 60%, 96%); color: hsl(87, 60%, 22%);">
+            73
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(83, 60%, 96%); color: hsl(83, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(83, 60%, 96%); color: hsl(83, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(84, 60%, 96%); color: hsl(84, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(80, 60%, 96%); color: hsl(80, 60%, 22%);">
+            67
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            67
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(78, 60%, 96%); color: hsl(78, 60%, 22%);">
+            66
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(80, 60%, 96%); color: hsl(80, 60%, 22%);">
+            67
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(88, 60%, 96%); color: hsl(88, 60%, 22%);">
+            74
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(63, 60%, 96%); color: hsl(63, 60%, 22%);">
+            53
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(74, 60%, 96%); color: hsl(74, 60%, 22%);">
+            62
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(89, 60%, 96%); color: hsl(89, 60%, 22%);">
+            75
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(80, 60%, 96%); color: hsl(80, 60%, 22%);">
+            67
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(72, 60%, 96%); color: hsl(72, 60%, 22%);">
+            61
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(77, 60%, 96%); color: hsl(77, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(41, 60%, 96%); color: hsl(41, 60%, 22%);">
+            35
+          </td>
+        
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">7</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/meta-llama-3.1-405b-instruct.html" class="font-medium hover:underline" style="color: var(--ink);">Llama-3.1-405B</a>
+          
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">65.2</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(70, 60%, 96%); color: hsl(70, 60%, 22%);">
+            59
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(90, 60%, 96%); color: hsl(90, 60%, 22%);">
+            76
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(97, 60%, 96%); color: hsl(97, 60%, 22%);">
+            81
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(69, 60%, 96%); color: hsl(69, 60%, 22%);">
+            58
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(74, 60%, 96%); color: hsl(74, 60%, 22%);">
+            62
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(104, 60%, 96%); color: hsl(104, 60%, 22%);">
+            87
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(78, 60%, 96%); color: hsl(78, 60%, 22%);">
+            66
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(77, 60%, 96%); color: hsl(77, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(69, 60%, 96%); color: hsl(69, 60%, 22%);">
+            58
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(91, 60%, 96%); color: hsl(91, 60%, 22%);">
+            76
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(75, 60%, 96%); color: hsl(75, 60%, 22%);">
+            63
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(77, 60%, 96%); color: hsl(77, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(77, 60%, 96%); color: hsl(77, 60%, 22%);">
+            65
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(69, 60%, 96%); color: hsl(69, 60%, 22%);">
+            58
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(69, 60%, 96%); color: hsl(69, 60%, 22%);">
+            58
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(70, 60%, 96%); color: hsl(70, 60%, 22%);">
+            58
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(75, 60%, 96%); color: hsl(75, 60%, 22%);">
+            63
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(76, 60%, 96%); color: hsl(76, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(84, 60%, 96%); color: hsl(84, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(93, 60%, 96%); color: hsl(93, 60%, 22%);">
+            78
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(71, 60%, 96%); color: hsl(71, 60%, 22%);">
+            60
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(101, 60%, 96%); color: hsl(101, 60%, 22%);">
+            84
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(72, 60%, 96%); color: hsl(72, 60%, 22%);">
+            61
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(68, 60%, 96%); color: hsl(68, 60%, 22%);">
+            57
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(69, 60%, 96%); color: hsl(69, 60%, 22%);">
+            58
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(56, 60%, 96%); color: hsl(56, 60%, 22%);">
+            47
+          </td>
+        
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">8</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/deepseek-r1-distill-qwen-14b-think.html" class="font-medium hover:underline" style="color: var(--ink);">DS-R1-Distill-Qwen-14B</a>
+          <span class="pill pill-think ml-1">think</span>
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">59.7</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(72, 60%, 96%); color: hsl(72, 60%, 22%);">
+            60
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            66
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(101, 60%, 96%); color: hsl(101, 60%, 22%);">
+            84
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(67, 60%, 96%); color: hsl(67, 60%, 22%);">
+            56
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(74, 60%, 96%); color: hsl(74, 60%, 22%);">
+            62
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(105, 60%, 96%); color: hsl(105, 60%, 22%);">
+            88
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(76, 60%, 96%); color: hsl(76, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(77, 60%, 96%); color: hsl(77, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(67, 60%, 96%); color: hsl(67, 60%, 22%);">
+            56
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(83, 60%, 96%); color: hsl(83, 60%, 22%);">
+            69
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(75, 60%, 96%); color: hsl(75, 60%, 22%);">
+            63
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(76, 60%, 96%); color: hsl(76, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(78, 60%, 96%); color: hsl(78, 60%, 22%);">
+            66
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(72, 60%, 96%); color: hsl(72, 60%, 22%);">
+            60
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(68, 60%, 96%); color: hsl(68, 60%, 22%);">
+            57
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(68, 60%, 96%); color: hsl(68, 60%, 22%);">
+            57
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(73, 60%, 96%); color: hsl(73, 60%, 22%);">
+            62
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(74, 60%, 96%); color: hsl(74, 60%, 22%);">
+            62
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(82, 60%, 96%); color: hsl(82, 60%, 22%);">
+            69
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(38, 60%, 96%); color: hsl(38, 60%, 22%);">
+            32
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(65, 60%, 96%); color: hsl(65, 60%, 22%);">
+            55
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(34, 60%, 96%); color: hsl(34, 60%, 22%);">
+            28
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(72, 60%, 96%); color: hsl(72, 60%, 22%);">
+            60
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(66, 60%, 96%); color: hsl(66, 60%, 22%);">
+            56
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(68, 60%, 96%); color: hsl(68, 60%, 22%);">
+            57
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(39, 60%, 96%); color: hsl(39, 60%, 22%);">
+            33
+          </td>
+        
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">9</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/qwen3-8b-no-think.html" class="font-medium hover:underline" style="color: var(--ink);">Qwen3-8B (no-think)</a>
+          
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">59.2</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(67, 60%, 96%); color: hsl(67, 60%, 22%);">
+            56
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            66
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(100, 60%, 96%); color: hsl(100, 60%, 22%);">
+            84
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(64, 60%, 96%); color: hsl(64, 60%, 22%);">
+            54
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(69, 60%, 96%); color: hsl(69, 60%, 22%);">
+            58
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(102, 60%, 96%); color: hsl(102, 60%, 22%);">
+            85
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(74, 60%, 96%); color: hsl(74, 60%, 22%);">
+            62
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(74, 60%, 96%); color: hsl(74, 60%, 22%);">
+            62
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(66, 60%, 96%); color: hsl(66, 60%, 22%);">
+            55
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(67, 60%, 96%); color: hsl(67, 60%, 22%);">
+            56
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(72, 60%, 96%); color: hsl(72, 60%, 22%);">
+            60
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(72, 60%, 96%); color: hsl(72, 60%, 22%);">
+            61
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(73, 60%, 96%); color: hsl(73, 60%, 22%);">
+            61
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(69, 60%, 96%); color: hsl(69, 60%, 22%);">
+            58
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(66, 60%, 96%); color: hsl(66, 60%, 22%);">
+            55
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(67, 60%, 96%); color: hsl(67, 60%, 22%);">
+            57
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(71, 60%, 96%); color: hsl(71, 60%, 22%);">
+            60
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(73, 60%, 96%); color: hsl(73, 60%, 22%);">
+            62
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(45, 60%, 96%); color: hsl(45, 60%, 22%);">
+            38
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(64, 60%, 96%); color: hsl(64, 60%, 22%);">
+            54
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            66
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(72, 60%, 96%); color: hsl(72, 60%, 22%);">
+            61
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(63, 60%, 96%); color: hsl(63, 60%, 22%);">
+            53
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(67, 60%, 96%); color: hsl(67, 60%, 22%);">
+            56
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(37, 60%, 96%); color: hsl(37, 60%, 22%);">
+            32
+          </td>
+        
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">10</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/gemma-3-12b-it-no-think.html" class="font-medium hover:underline" style="color: var(--ink);">Gemma-3-12B-IT</a>
+          
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">56.5</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(60, 60%, 96%); color: hsl(60, 60%, 22%);">
+            50
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            66
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(91, 60%, 96%); color: hsl(91, 60%, 22%);">
+            76
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(59, 60%, 96%); color: hsl(59, 60%, 22%);">
+            49
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(63, 60%, 96%); color: hsl(63, 60%, 22%);">
+            53
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(94, 60%, 96%); color: hsl(94, 60%, 22%);">
+            78
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(68, 60%, 96%); color: hsl(68, 60%, 22%);">
+            57
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(68, 60%, 96%); color: hsl(68, 60%, 22%);">
+            57
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(60, 60%, 96%); color: hsl(60, 60%, 22%);">
+            51
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(75, 60%, 96%); color: hsl(75, 60%, 22%);">
+            63
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(65, 60%, 96%); color: hsl(65, 60%, 22%);">
+            55
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(66, 60%, 96%); color: hsl(66, 60%, 22%);">
+            56
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(66, 60%, 96%); color: hsl(66, 60%, 22%);">
+            55
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(60, 60%, 96%); color: hsl(60, 60%, 22%);">
+            50
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(58, 60%, 96%); color: hsl(58, 60%, 22%);">
+            49
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(62, 60%, 96%); color: hsl(62, 60%, 22%);">
+            52
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(65, 60%, 96%); color: hsl(65, 60%, 22%);">
+            54
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(67, 60%, 96%); color: hsl(67, 60%, 22%);">
+            56
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(76, 60%, 96%); color: hsl(76, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(76, 60%, 96%); color: hsl(76, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(64, 60%, 96%); color: hsl(64, 60%, 22%);">
+            54
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(84, 60%, 96%); color: hsl(84, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(63, 60%, 96%); color: hsl(63, 60%, 22%);">
+            53
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(58, 60%, 96%); color: hsl(58, 60%, 22%);">
+            49
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(60, 60%, 96%); color: hsl(60, 60%, 22%);">
+            51
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(44, 60%, 96%); color: hsl(44, 60%, 22%);">
+            37
+          </td>
+        
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">11</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/llama-3.1-8b-no-think.html" class="font-medium hover:underline" style="color: var(--ink);">Llama-3.1-8B</a>
+          
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">50.3</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(55, 60%, 96%); color: hsl(55, 60%, 22%);">
+            46
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(59, 60%, 96%); color: hsl(59, 60%, 22%);">
+            50
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(82, 60%, 96%); color: hsl(82, 60%, 22%);">
+            69
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(57, 60%, 96%); color: hsl(57, 60%, 22%);">
+            48
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(62, 60%, 96%); color: hsl(62, 60%, 22%);">
+            52
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(94, 60%, 96%); color: hsl(94, 60%, 22%);">
+            79
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(65, 60%, 96%); color: hsl(65, 60%, 22%);">
+            54
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(63, 60%, 96%); color: hsl(63, 60%, 22%);">
+            53
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(54, 60%, 96%); color: hsl(54, 60%, 22%);">
+            45
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(55, 60%, 96%); color: hsl(55, 60%, 22%);">
+            46
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(55, 60%, 96%); color: hsl(55, 60%, 22%);">
+            46
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(64, 60%, 96%); color: hsl(64, 60%, 22%);">
+            54
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(57, 60%, 96%); color: hsl(57, 60%, 22%);">
+            48
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(55, 60%, 96%); color: hsl(55, 60%, 22%);">
+            46
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(51, 60%, 96%); color: hsl(51, 60%, 22%);">
+            43
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(58, 60%, 96%); color: hsl(58, 60%, 22%);">
+            49
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(61, 60%, 96%); color: hsl(61, 60%, 22%);">
+            52
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(62, 60%, 96%); color: hsl(62, 60%, 22%);">
+            52
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(73, 60%, 96%); color: hsl(73, 60%, 22%);">
+            61
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(56, 60%, 96%); color: hsl(56, 60%, 22%);">
+            47
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(55, 60%, 96%); color: hsl(55, 60%, 22%);">
+            47
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(60, 60%, 96%); color: hsl(60, 60%, 22%);">
+            50
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(59, 60%, 96%); color: hsl(59, 60%, 22%);">
+            49
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(50, 60%, 96%); color: hsl(50, 60%, 22%);">
+            42
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(58, 60%, 96%); color: hsl(58, 60%, 22%);">
+            49
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(35, 60%, 96%); color: hsl(35, 60%, 22%);">
+            30
+          </td>
+        
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">12</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/minstral-8b-instruct-no-think.html" class="font-medium hover:underline" style="color: var(--ink);">Mistral-8B-Instruct</a>
+          
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">47.3</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(51, 60%, 96%); color: hsl(51, 60%, 22%);">
+            43
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(56, 60%, 96%); color: hsl(56, 60%, 22%);">
+            47
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(80, 60%, 96%); color: hsl(80, 60%, 22%);">
+            67
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(54, 60%, 96%); color: hsl(54, 60%, 22%);">
+            46
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(58, 60%, 96%); color: hsl(58, 60%, 22%);">
+            49
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(92, 60%, 96%); color: hsl(92, 60%, 22%);">
+            77
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(65, 60%, 96%); color: hsl(65, 60%, 22%);">
+            55
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(63, 60%, 96%); color: hsl(63, 60%, 22%);">
+            53
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(53, 60%, 96%); color: hsl(53, 60%, 22%);">
+            45
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(51, 60%, 96%); color: hsl(51, 60%, 22%);">
+            43
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(56, 60%, 96%); color: hsl(56, 60%, 22%);">
+            47
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(62, 60%, 96%); color: hsl(62, 60%, 22%);">
+            52
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(56, 60%, 96%); color: hsl(56, 60%, 22%);">
+            47
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(52, 60%, 96%); color: hsl(52, 60%, 22%);">
+            44
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(53, 60%, 96%); color: hsl(53, 60%, 22%);">
+            44
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(53, 60%, 96%); color: hsl(53, 60%, 22%);">
+            45
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(58, 60%, 96%); color: hsl(58, 60%, 22%);">
+            49
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(63, 60%, 96%); color: hsl(63, 60%, 22%);">
+            53
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(72, 60%, 96%); color: hsl(72, 60%, 22%);">
+            60
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(21, 60%, 96%); color: hsl(21, 60%, 22%);">
+            18
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(51, 60%, 96%); color: hsl(51, 60%, 22%);">
+            43
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(52, 60%, 96%); color: hsl(52, 60%, 22%);">
+            44
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(51, 60%, 96%); color: hsl(51, 60%, 22%);">
+            43
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(49, 60%, 96%); color: hsl(49, 60%, 22%);">
+            41
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(53, 60%, 96%); color: hsl(53, 60%, 22%);">
+            44
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(34, 60%, 96%); color: hsl(34, 60%, 22%);">
+            29
+          </td>
+        
+        
+      </tr>
+      
+    </tbody>
+  </table>
+</div>
+
+
+
+
+
+<div class="mb-4 flex items-baseline justify-between">
+  <h2 class="font-bold" style="font-size: 17px; color: var(--ink);">
+    <span class="inline-block w-1 h-4 mr-2 align-middle" style="background: #64748B;"></span>
+    🔒 闭源 / API 榜
+  </h2>
+  <span class="text-xs text-gray-500">10 个 API</span>
+</div>
+<div class="card overflow-x-auto mb-8">
+  <table class="lb w-full" style="font-size: 12px;">
+    <thead>
+      <tr>
+        <th class="text-left sticky-col" style="background: #fafafa;">#</th>
+        <th class="text-left sticky-col" style="left: 38px; background: #fafafa; min-width: 180px;">模型</th>
+        <th class="text-right sticky-col" style="left: 218px; background: #fafafa; min-width: 64px;">均值</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Arabic</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Bengal</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Chines</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Czech</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Dutch</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Englis</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">French</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">German</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Greek</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Hindi</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Indone</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Italia</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Japane</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Korean</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Malay</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Polish</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Portug</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Russia</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Spanis</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Swahil</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Tagalo</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Telugu</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Thai</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Turkis</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Vietna</th>
+        
+        <th class="text-right" style="font-size: 10px; min-width: 50px;">Yoruba</th>
+        
+      </tr>
+    </thead>
+    <tbody>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">1</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/gemini-2.5-pro.html" class="font-medium hover:underline" style="color: var(--ink);">Gemini 2.5 Pro</a>
+          
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">86.1</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(101, 60%, 96%); color: hsl(101, 60%, 22%);">
+            85
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(107, 60%, 96%); color: hsl(107, 60%, 22%);">
+            90
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(112, 60%, 96%); color: hsl(112, 60%, 22%);">
+            93
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(101, 60%, 96%); color: hsl(101, 60%, 22%);">
+            84
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(101, 60%, 96%); color: hsl(101, 60%, 22%);">
+            84
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(110, 60%, 96%); color: hsl(110, 60%, 22%);">
+            92
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(101, 60%, 96%); color: hsl(101, 60%, 22%);">
+            85
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(100, 60%, 96%); color: hsl(100, 60%, 22%);">
+            84
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(104, 60%, 96%); color: hsl(104, 60%, 22%);">
+            87
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(106, 60%, 96%); color: hsl(106, 60%, 22%);">
+            89
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(100, 60%, 96%); color: hsl(100, 60%, 22%);">
+            84
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(104, 60%, 96%); color: hsl(104, 60%, 22%);">
+            87
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(103, 60%, 96%); color: hsl(103, 60%, 22%);">
+            86
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(99, 60%, 96%); color: hsl(99, 60%, 22%);">
+            83
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(101, 60%, 96%); color: hsl(101, 60%, 22%);">
+            85
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(102, 60%, 96%); color: hsl(102, 60%, 22%);">
+            85
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(101, 60%, 96%); color: hsl(101, 60%, 22%);">
+            85
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(103, 60%, 96%); color: hsl(103, 60%, 22%);">
+            86
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(105, 60%, 96%); color: hsl(105, 60%, 22%);">
+            88
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(107, 60%, 96%); color: hsl(107, 60%, 22%);">
+            90
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(99, 60%, 96%); color: hsl(99, 60%, 22%);">
+            83
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(111, 60%, 96%); color: hsl(111, 60%, 22%);">
+            93
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(102, 60%, 96%); color: hsl(102, 60%, 22%);">
+            86
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(96, 60%, 96%); color: hsl(96, 60%, 22%);">
+            80
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(100, 60%, 96%); color: hsl(100, 60%, 22%);">
+            84
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(97, 60%, 96%); color: hsl(97, 60%, 22%);">
+            81
+          </td>
+        
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">2</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/doubao-seed-1-6-thinking-250715.html" class="font-medium hover:underline" style="color: var(--ink);">Doubao-Seed-1.6 (think)</a>
+          <span class="pill pill-think ml-1">think</span>
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">84.7</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(96, 60%, 96%); color: hsl(96, 60%, 22%);">
+            80
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(102, 60%, 96%); color: hsl(102, 60%, 22%);">
+            85
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(111, 60%, 96%); color: hsl(111, 60%, 22%);">
+            93
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(102, 60%, 96%); color: hsl(102, 60%, 22%);">
+            86
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(104, 60%, 96%); color: hsl(104, 60%, 22%);">
+            87
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(108, 60%, 96%); color: hsl(108, 60%, 22%);">
+            91
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(104, 60%, 96%); color: hsl(104, 60%, 22%);">
+            87
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(102, 60%, 96%); color: hsl(102, 60%, 22%);">
+            86
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(101, 60%, 96%); color: hsl(101, 60%, 22%);">
+            84
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(99, 60%, 96%); color: hsl(99, 60%, 22%);">
+            83
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(103, 60%, 96%); color: hsl(103, 60%, 22%);">
+            86
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(105, 60%, 96%); color: hsl(105, 60%, 22%);">
+            88
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(105, 60%, 96%); color: hsl(105, 60%, 22%);">
+            88
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(98, 60%, 96%); color: hsl(98, 60%, 22%);">
+            82
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(104, 60%, 96%); color: hsl(104, 60%, 22%);">
+            87
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(102, 60%, 96%); color: hsl(102, 60%, 22%);">
+            86
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(104, 60%, 96%); color: hsl(104, 60%, 22%);">
+            87
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(101, 60%, 96%); color: hsl(101, 60%, 22%);">
+            84
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(107, 60%, 96%); color: hsl(107, 60%, 22%);">
+            90
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(97, 60%, 96%); color: hsl(97, 60%, 22%);">
+            81
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(105, 60%, 96%); color: hsl(105, 60%, 22%);">
+            88
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(108, 60%, 96%); color: hsl(108, 60%, 22%);">
+            90
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(99, 60%, 96%); color: hsl(99, 60%, 22%);">
+            83
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(97, 60%, 96%); color: hsl(97, 60%, 22%);">
+            81
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(99, 60%, 96%); color: hsl(99, 60%, 22%);">
+            83
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(64, 60%, 96%); color: hsl(64, 60%, 22%);">
+            54
+          </td>
+        
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">3</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/doubao-seed-1-6-250615.html" class="font-medium hover:underline" style="color: var(--ink);">Doubao-Seed-1.6</a>
+          
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">81.7</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(92, 60%, 96%); color: hsl(92, 60%, 22%);">
+            77
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(104, 60%, 96%); color: hsl(104, 60%, 22%);">
+            87
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(111, 60%, 96%); color: hsl(111, 60%, 22%);">
+            93
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(96, 60%, 96%); color: hsl(96, 60%, 22%);">
+            80
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(98, 60%, 96%); color: hsl(98, 60%, 22%);">
+            82
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(109, 60%, 96%); color: hsl(109, 60%, 22%);">
+            91
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(100, 60%, 96%); color: hsl(100, 60%, 22%);">
+            84
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(96, 60%, 96%); color: hsl(96, 60%, 22%);">
+            81
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(96, 60%, 96%); color: hsl(96, 60%, 22%);">
+            81
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(100, 60%, 96%); color: hsl(100, 60%, 22%);">
+            83
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(99, 60%, 96%); color: hsl(99, 60%, 22%);">
+            83
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(100, 60%, 96%); color: hsl(100, 60%, 22%);">
+            83
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(103, 60%, 96%); color: hsl(103, 60%, 22%);">
+            86
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(96, 60%, 96%); color: hsl(96, 60%, 22%);">
+            80
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(97, 60%, 96%); color: hsl(97, 60%, 22%);">
+            82
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(96, 60%, 96%); color: hsl(96, 60%, 22%);">
+            80
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(101, 60%, 96%); color: hsl(101, 60%, 22%);">
+            84
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(96, 60%, 96%); color: hsl(96, 60%, 22%);">
+            80
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(103, 60%, 96%); color: hsl(103, 60%, 22%);">
+            87
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(96, 60%, 96%); color: hsl(96, 60%, 22%);">
+            81
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(99, 60%, 96%); color: hsl(99, 60%, 22%);">
+            83
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(107, 60%, 96%); color: hsl(107, 60%, 22%);">
+            90
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(96, 60%, 96%); color: hsl(96, 60%, 22%);">
+            80
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(90, 60%, 96%); color: hsl(90, 60%, 22%);">
+            75
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(91, 60%, 96%); color: hsl(91, 60%, 22%);">
+            76
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(65, 60%, 96%); color: hsl(65, 60%, 22%);">
+            55
+          </td>
+        
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">4</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/o3.html" class="font-medium hover:underline" style="color: var(--ink);">o3</a>
+          <span class="pill pill-think ml-1">think</span>
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">79.9</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(93, 60%, 96%); color: hsl(93, 60%, 22%);">
+            78
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(105, 60%, 96%); color: hsl(105, 60%, 22%);">
+            88
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(109, 60%, 96%); color: hsl(109, 60%, 22%);">
+            91
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(88, 60%, 96%); color: hsl(88, 60%, 22%);">
+            74
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(90, 60%, 96%); color: hsl(90, 60%, 22%);">
+            76
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(108, 60%, 96%); color: hsl(108, 60%, 22%);">
+            90
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(93, 60%, 96%); color: hsl(93, 60%, 22%);">
+            78
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(93, 60%, 96%); color: hsl(93, 60%, 22%);">
+            78
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(94, 60%, 96%); color: hsl(94, 60%, 22%);">
+            79
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(107, 60%, 96%); color: hsl(107, 60%, 22%);">
+            90
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(91, 60%, 96%); color: hsl(91, 60%, 22%);">
+            76
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(94, 60%, 96%); color: hsl(94, 60%, 22%);">
+            78
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(95, 60%, 96%); color: hsl(95, 60%, 22%);">
+            80
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(90, 60%, 96%); color: hsl(90, 60%, 22%);">
+            76
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(90, 60%, 96%); color: hsl(90, 60%, 22%);">
+            75
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(89, 60%, 96%); color: hsl(89, 60%, 22%);">
+            75
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(92, 60%, 96%); color: hsl(92, 60%, 22%);">
+            77
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(92, 60%, 96%); color: hsl(92, 60%, 22%);">
+            77
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(96, 60%, 96%); color: hsl(96, 60%, 22%);">
+            80
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(108, 60%, 96%); color: hsl(108, 60%, 22%);">
+            91
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(91, 60%, 96%); color: hsl(91, 60%, 22%);">
+            76
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(109, 60%, 96%); color: hsl(109, 60%, 22%);">
+            92
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(91, 60%, 96%); color: hsl(91, 60%, 22%);">
+            76
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(87, 60%, 96%); color: hsl(87, 60%, 22%);">
+            73
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(90, 60%, 96%); color: hsl(90, 60%, 22%);">
+            75
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(94, 60%, 96%); color: hsl(94, 60%, 22%);">
+            79
+          </td>
+        
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">5</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/claude-sonnet-4-5-20250929.html" class="font-medium hover:underline" style="color: var(--ink);">Claude Sonnet 4.5</a>
+          
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">78.0</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(90, 60%, 96%); color: hsl(90, 60%, 22%);">
+            75
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(110, 60%, 96%); color: hsl(110, 60%, 22%);">
+            92
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(110, 60%, 96%); color: hsl(110, 60%, 22%);">
+            92
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(85, 60%, 96%); color: hsl(85, 60%, 22%);">
+            71
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(87, 60%, 96%); color: hsl(87, 60%, 22%);">
+            73
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(109, 60%, 96%); color: hsl(109, 60%, 22%);">
+            91
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(92, 60%, 96%); color: hsl(92, 60%, 22%);">
+            77
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(91, 60%, 96%); color: hsl(91, 60%, 22%);">
+            76
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(87, 60%, 96%); color: hsl(87, 60%, 22%);">
+            73
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(106, 60%, 96%); color: hsl(106, 60%, 22%);">
+            89
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(90, 60%, 96%); color: hsl(90, 60%, 22%);">
+            75
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(91, 60%, 96%); color: hsl(91, 60%, 22%);">
+            76
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(92, 60%, 96%); color: hsl(92, 60%, 22%);">
+            77
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(90, 60%, 96%); color: hsl(90, 60%, 22%);">
+            75
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(87, 60%, 96%); color: hsl(87, 60%, 22%);">
+            73
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(88, 60%, 96%); color: hsl(88, 60%, 22%);">
+            74
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(91, 60%, 96%); color: hsl(91, 60%, 22%);">
+            76
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(92, 60%, 96%); color: hsl(92, 60%, 22%);">
+            77
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(97, 60%, 96%); color: hsl(97, 60%, 22%);">
+            81
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(102, 60%, 96%); color: hsl(102, 60%, 22%);">
+            86
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(90, 60%, 96%); color: hsl(90, 60%, 22%);">
+            75
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(110, 60%, 96%); color: hsl(110, 60%, 22%);">
+            92
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(88, 60%, 96%); color: hsl(88, 60%, 22%);">
+            74
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(86, 60%, 96%); color: hsl(86, 60%, 22%);">
+            72
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(88, 60%, 96%); color: hsl(88, 60%, 22%);">
+            74
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(72, 60%, 96%); color: hsl(72, 60%, 22%);">
+            60
+          </td>
+        
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">6</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/o4-mini.html" class="font-medium hover:underline" style="color: var(--ink);">o4-mini</a>
+          <span class="pill pill-think ml-1">think</span>
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">74.7</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(84, 60%, 96%); color: hsl(84, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(102, 60%, 96%); color: hsl(102, 60%, 22%);">
+            86
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(108, 60%, 96%); color: hsl(108, 60%, 22%);">
+            90
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            67
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(84, 60%, 96%); color: hsl(84, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(108, 60%, 96%); color: hsl(108, 60%, 22%);">
+            90
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(87, 60%, 96%); color: hsl(87, 60%, 22%);">
+            73
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(88, 60%, 96%); color: hsl(88, 60%, 22%);">
+            73
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(86, 60%, 96%); color: hsl(86, 60%, 22%);">
+            72
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(102, 60%, 96%); color: hsl(102, 60%, 22%);">
+            85
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(84, 60%, 96%); color: hsl(84, 60%, 22%);">
+            71
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(85, 60%, 96%); color: hsl(85, 60%, 22%);">
+            71
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(90, 60%, 96%); color: hsl(90, 60%, 22%);">
+            75
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(83, 60%, 96%); color: hsl(83, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(82, 60%, 96%); color: hsl(82, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(87, 60%, 96%); color: hsl(87, 60%, 22%);">
+            73
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(86, 60%, 96%); color: hsl(86, 60%, 22%);">
+            72
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(91, 60%, 96%); color: hsl(91, 60%, 22%);">
+            76
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(102, 60%, 96%); color: hsl(102, 60%, 22%);">
+            86
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(85, 60%, 96%); color: hsl(85, 60%, 22%);">
+            71
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(105, 60%, 96%); color: hsl(105, 60%, 22%);">
+            88
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(85, 60%, 96%); color: hsl(85, 60%, 22%);">
+            71
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(82, 60%, 96%); color: hsl(82, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            67
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(83, 60%, 96%); color: hsl(83, 60%, 22%);">
+            70
+          </td>
+        
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">7</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/grok-3.html" class="font-medium hover:underline" style="color: var(--ink);">Grok 3</a>
+          
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">72.3</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(82, 60%, 96%); color: hsl(82, 60%, 22%);">
+            69
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(97, 60%, 96%); color: hsl(97, 60%, 22%);">
+            82
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(107, 60%, 96%); color: hsl(107, 60%, 22%);">
+            90
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(78, 60%, 96%); color: hsl(78, 60%, 22%);">
+            65
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(80, 60%, 96%); color: hsl(80, 60%, 22%);">
+            67
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(108, 60%, 96%); color: hsl(108, 60%, 22%);">
+            91
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(86, 60%, 96%); color: hsl(86, 60%, 22%);">
+            72
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(84, 60%, 96%); color: hsl(84, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(82, 60%, 96%); color: hsl(82, 60%, 22%);">
+            69
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(97, 60%, 96%); color: hsl(97, 60%, 22%);">
+            81
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(82, 60%, 96%); color: hsl(82, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(83, 60%, 96%); color: hsl(83, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(86, 60%, 96%); color: hsl(86, 60%, 22%);">
+            72
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(82, 60%, 96%); color: hsl(82, 60%, 22%);">
+            69
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(77, 60%, 96%); color: hsl(77, 60%, 22%);">
+            65
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            67
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(85, 60%, 96%); color: hsl(85, 60%, 22%);">
+            71
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(92, 60%, 96%); color: hsl(92, 60%, 22%);">
+            77
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(100, 60%, 96%); color: hsl(100, 60%, 22%);">
+            84
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(102, 60%, 96%); color: hsl(102, 60%, 22%);">
+            86
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(82, 60%, 96%); color: hsl(82, 60%, 22%);">
+            69
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(77, 60%, 96%); color: hsl(77, 60%, 22%);">
+            65
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(76, 60%, 96%); color: hsl(76, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(74, 60%, 96%); color: hsl(74, 60%, 22%);">
+            62
+          </td>
+        
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">8</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/gpt-5-chat-latest.html" class="font-medium hover:underline" style="color: var(--ink);">GPT-5 Chat</a>
+          
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">72.2</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(104, 60%, 96%); color: hsl(104, 60%, 22%);">
+            87
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(107, 60%, 96%); color: hsl(107, 60%, 22%);">
+            90
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(77, 60%, 96%); color: hsl(77, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(80, 60%, 96%); color: hsl(80, 60%, 22%);">
+            67
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(108, 60%, 96%); color: hsl(108, 60%, 22%);">
+            90
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(84, 60%, 96%); color: hsl(84, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(82, 60%, 96%); color: hsl(82, 60%, 22%);">
+            69
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            66
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(101, 60%, 96%); color: hsl(101, 60%, 22%);">
+            84
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(84, 60%, 96%); color: hsl(84, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(86, 60%, 96%); color: hsl(86, 60%, 22%);">
+            72
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(75, 60%, 96%); color: hsl(75, 60%, 22%);">
+            63
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(77, 60%, 96%); color: hsl(77, 60%, 22%);">
+            65
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(80, 60%, 96%); color: hsl(80, 60%, 22%);">
+            67
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(83, 60%, 96%); color: hsl(83, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(90, 60%, 96%); color: hsl(90, 60%, 22%);">
+            75
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(104, 60%, 96%); color: hsl(104, 60%, 22%);">
+            87
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(106, 60%, 96%); color: hsl(106, 60%, 22%);">
+            88
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(74, 60%, 96%); color: hsl(74, 60%, 22%);">
+            62
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(76, 60%, 96%); color: hsl(76, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            66
+          </td>
+        
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">9</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/gpt-4o.html" class="font-medium hover:underline" style="color: var(--ink);">GPT-4o</a>
+          
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">68.6</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(78, 60%, 96%); color: hsl(78, 60%, 22%);">
+            65
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(102, 60%, 96%); color: hsl(102, 60%, 22%);">
+            85
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(101, 60%, 96%); color: hsl(101, 60%, 22%);">
+            84
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(71, 60%, 96%); color: hsl(71, 60%, 22%);">
+            59
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(76, 60%, 96%); color: hsl(76, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(105, 60%, 96%); color: hsl(105, 60%, 22%);">
+            88
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            66
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(77, 60%, 96%); color: hsl(77, 60%, 22%);">
+            65
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(94, 60%, 96%); color: hsl(94, 60%, 22%);">
+            79
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(78, 60%, 96%); color: hsl(78, 60%, 22%);">
+            66
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            66
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(82, 60%, 96%); color: hsl(82, 60%, 22%);">
+            69
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(74, 60%, 96%); color: hsl(74, 60%, 22%);">
+            62
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(73, 60%, 96%); color: hsl(73, 60%, 22%);">
+            61
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(74, 60%, 96%); color: hsl(74, 60%, 22%);">
+            62
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(76, 60%, 96%); color: hsl(76, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            66
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(86, 60%, 96%); color: hsl(86, 60%, 22%);">
+            72
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(98, 60%, 96%); color: hsl(98, 60%, 22%);">
+            82
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(76, 60%, 96%); color: hsl(76, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(103, 60%, 96%); color: hsl(103, 60%, 22%);">
+            86
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(75, 60%, 96%); color: hsl(75, 60%, 22%);">
+            63
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(70, 60%, 96%); color: hsl(70, 60%, 22%);">
+            59
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(71, 60%, 96%); color: hsl(71, 60%, 22%);">
+            60
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(68, 60%, 96%); color: hsl(68, 60%, 22%);">
+            57
+          </td>
+        
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums sticky-col" style="background: white;">10</td>
+        <td class="sticky-col" style="left: 38px; background: white;">
+          <a href="/gaoyao-leaderboard/zh/model/qwen-max.html" class="font-medium hover:underline" style="color: var(--ink);">Qwen-Max</a>
+          
+        </td>
+        <td class="text-right score-cell sticky-col" style="left: 218px; background: white; color: var(--hw-red); font-weight: 600;">68.1</td>
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(77, 60%, 96%); color: hsl(77, 60%, 22%);">
+            65
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(94, 60%, 96%); color: hsl(94, 60%, 22%);">
+            79
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(104, 60%, 96%); color: hsl(104, 60%, 22%);">
+            87
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(76, 60%, 96%); color: hsl(76, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(78, 60%, 96%); color: hsl(78, 60%, 22%);">
+            65
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(106, 60%, 96%); color: hsl(106, 60%, 22%);">
+            89
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(83, 60%, 96%); color: hsl(83, 60%, 22%);">
+            70
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(76, 60%, 96%); color: hsl(76, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(85, 60%, 96%); color: hsl(85, 60%, 22%);">
+            71
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(78, 60%, 96%); color: hsl(78, 60%, 22%);">
+            66
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(76, 60%, 96%); color: hsl(76, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            66
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(81, 60%, 96%); color: hsl(81, 60%, 22%);">
+            68
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(89, 60%, 96%); color: hsl(89, 60%, 22%);">
+            75
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            67
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(78, 60%, 96%); color: hsl(78, 60%, 22%);">
+            65
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(91, 60%, 96%); color: hsl(91, 60%, 22%);">
+            76
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(79, 60%, 96%); color: hsl(79, 60%, 22%);">
+            66
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(73, 60%, 96%); color: hsl(73, 60%, 22%);">
+            61
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(76, 60%, 96%); color: hsl(76, 60%, 22%);">
+            64
+          </td>
+        
+        
+        
+        
+          
+          <td class="text-right score-cell tabular-nums"
+              style="background: hsl(48, 60%, 96%); color: hsl(48, 60%, 22%);">
+            41
+          </td>
+        
+        
+      </tr>
+      
+    </tbody>
+  </table>
+</div>
+
+
+
+<p class="mt-3 text-xs text-gray-500">
+  单元格 = 该模型在该语言上的所有评测任务平均分（0–100，红→绿渐变映射强弱）。点模型名查看 dataset × language 详细热图。
+</p>
+
+<style>
+  table.lb .sticky-col { position: sticky; z-index: 1; }
+  table.lb thead th.sticky-col { z-index: 2; }
+</style>
+
+    </main>
+  </div>
+
+  <footer>
+    <div class="mx-auto px-10 flex justify-between items-center flex-wrap gap-3" style="max-width: 1680px;">
+      <span>皋陶 GaoYao · 得分 0–100 · 基于原始评测结果实时聚合</span>
+      <span class="flex items-center gap-3 text-gray-400">
+        <span class="text-[11px]">由</span>
+        <img src="/gaoyao-leaderboard/static/logo/prism-mark.svg?v=2" alt="PRISM" style="width: 22px; height: 22px;">
+        <span class="font-semibold tracking-widest" style="color: var(--ink-2);">PRISM</span>
+      </span>
+    </div>
+  </footer>
+</body>
+</html>

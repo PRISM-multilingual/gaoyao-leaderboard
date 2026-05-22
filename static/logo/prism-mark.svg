@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <rect width="200" height="200" fill="#ffffff"/>
+
+  <!-- incoming white-light beam -->
+  <line x1="20" y1="60" x2="76" y2="90" stroke="#1f1f1f" stroke-width="2.2" stroke-linecap="round"/>
+
+  <!-- glass prism -->
+  <polygon points="76,144 124,40 124,144" fill="#fafafa" stroke="#1f1f1f" stroke-width="3.6" stroke-linejoin="round"/>
+  <line x1="82" y1="139" x2="118" y2="48" stroke="#e4e4e7" stroke-width="1.2"/>
+
+  <!-- 7-ray spectrum -->
+  <g stroke-width="3.2" stroke-linecap="round" fill="none">
+    <line x1="124" y1="86"  x2="184" y2="58"  stroke="#B91C1C"/>
+    <line x1="124" y1="92"  x2="186" y2="74"  stroke="#EA580C"/>
+    <line x1="124" y1="98"  x2="186" y2="92"  stroke="#CA8A04"/>
+    <line x1="124" y1="104" x2="186" y2="108" stroke="#15803D"/>
+    <line x1="124" y1="110" x2="186" y2="124" stroke="#0E7490"/>
+    <line x1="124" y1="116" x2="186" y2="140" stroke="#1D4ED8"/>
+    <line x1="124" y1="122" x2="184" y2="156" stroke="#6B21A8"/>
+  </g>
+</svg>

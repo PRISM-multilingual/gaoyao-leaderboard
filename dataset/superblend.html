@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SuperBLEnD · GaoYao</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="/gaoyao-leaderboard/static/logo/favicon.png?v=2">
+  <style>
+    :root {
+      --hw-red:    #B91C1C;   /* deeper, less saturated than HW red */
+      --hw-red-2:  #7F1D1D;
+      --ink:       #18181B;
+      --ink-2:     #3F3F46;
+      --muted:     #71717A;
+      --line:      #E4E4E7;
+      --line-2:    #F4F4F5;
+      --bg:        #FAFAF9;
+      --paper:     #FFFFFF;
+    }
+    html { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+    [x-cloak] { display: none !important; }
+    body { background: var(--bg); color: var(--ink); font-size: 14px; line-height: 1.5; }
+    .font-serif-zh { font-family: 'Noto Serif SC', 'Songti SC', serif; letter-spacing: 0.02em; }
+    .font-mono    { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+    /* "GaoYao" wordmark */
+    .wordmark { font-family: 'Noto Serif SC', serif; font-weight: 700; letter-spacing: 0.04em; }
+
+    /* topbar */
+    .topbar { background: var(--paper); border-bottom: 1px solid var(--line); }
+    .topbar-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 32px; }
+    .nav-pill { padding: 6px 14px; font-size: 13px; color: var(--ink-2); border-radius: 999px; transition: all 0.15s; }
+    .nav-pill:hover { background: var(--line-2); color: var(--ink); }
+    .nav-pill.active { background: var(--ink); color: white; }
+    .btn-primary { background: var(--hw-red); color: white; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; transition: all 0.15s; }
+    .btn-primary:hover { background: var(--hw-red-2); }
+
+    /* side rail */
+    .rail { position: sticky; top: 24px; align-self: start; }
+    .rail-section { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 20px; margin-bottom: 8px; padding: 0 12px; }
+    .rail-link { display: block; padding: 9px 14px; border-radius: 6px; font-size: 14.5px; color: var(--ink-2); transition: all 0.12s; }
+    .rail-link:hover { background: var(--line-2); color: var(--ink); }
+    .rail-link.active { background: rgba(185,28,28,0.08); color: var(--hw-red); font-weight: 600; box-shadow: inset 2px 0 0 var(--hw-red); }
+
+    /* cards */
+    .card { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; }
+    .card-tight { padding: 16px 20px; }
+    .card-pad   { padding: 24px 28px; }
+
+    /* heading rhythm */
+    h1.page { font-family: 'Noto Serif SC', serif; font-size: 28px; font-weight: 700; letter-spacing: -0.005em; color: var(--ink); margin: 0; }
+    .page-lede { font-size: 14px; color: var(--muted); margin-top: 6px; line-height: 1.55; max-width: 80ch; }
+
+    /* tables */
+    table.lb { border-collapse: separate; border-spacing: 0; width: 100%; }
+    table.lb th, table.lb td { padding: 9px 14px; font-size: 13px; vertical-align: middle; }
+    table.lb thead th { font-weight: 600; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); background: var(--line-2); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 1; }
+    table.lb tbody tr:hover { background: rgba(185,28,28,0.025); }
+    table.lb tbody tr + tr td { border-top: 1px solid var(--line-2); }
+    .score-cell { font-variant-numeric: tabular-nums; }
+    .score-top { font-weight: 700; color: var(--hw-red); }
+
+    /* pills */
+    .pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 11px; font-weight: 500; border-radius: 999px; line-height: 1.4; }
+    .pill-open    { background: #ECFDF5; color: #047857; }
+    .pill-closed  { background: #F4F4F5; color: #52525B; }
+    .pill-judge   { background: #FEF3C7; color: #92400E; }
+    .pill-think   { background: #FAF5FF; color: #6B21A8; }
+    .pill-tier-H  { background: #ECFDF5; color: #047857; }
+    .pill-tier-M  { background: #FEFCE8; color: #854D0E; }
+    .pill-tier-L  { background: #FEE2E2; color: #991B1B; }
+
+    /* score bar */
+    .bar-track { background: var(--line-2); border-radius: 3px; height: 8px; overflow: hidden; }
+    .bar-fill  { background: var(--hw-red); height: 100%; border-radius: 3px; }
+
+    /* footer */
+    footer { background: var(--paper); border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0; font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <!-- data-cutoff banner -->
+  <div style="background: linear-gradient(90deg, #FEF2F2 0%, #FFFFFF 60%); border-bottom: 1px solid #FCE7E7;">
+    <div class="mx-auto px-6 lg:px-10 py-1.5 flex items-center gap-2 text-xs" style="max-width: 1680px; color: #7F1D1D;">
+      <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: var(--hw-red);"></span>
+      <span><b>Data cutoff</b> · November 2025</span>
+      <span class="text-gray-400 ml-1">— newly submitted models appear after admin review</span>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="topbar-inner max-w-none">
+      <a href="/gaoyao-leaderboard/" class="flex items-center gap-3">
+        <span class="inline-block w-1 h-9" style="background: var(--hw-red);"></span>
+        <span>
+          <div class="wordmark text-xl text-black">皋陶 · GaoYao</div>
+          <div class="text-[11px] text-gray-500 -mt-1">Multilingual & Multicultural LLM Leaderboard · ACL 2026</div>
+        </span>
+      </a>
+      <nav class="flex items-center gap-2">
+        <a href="https://arxiv.org/abs/2604.20225" class="nav-pill">Paper</a>
+        <a href="https://github.com/lunyiliu/GaoYao" class="nav-pill">GitHub</a>
+        <a href="/gaoyao-leaderboard/about.html" class="nav-pill ">About</a>
+        <!-- language toggle -->
+        <a href="/gaoyao-leaderboard/zh/dataset/superblend.html" class="nav-pill" title="Switch language">中文</a>
+        
+      </nav>
+    </div>
+  </header>
+
+  <div class="mx-auto px-6 lg:px-10 py-8 grid grid-cols-1 md:grid-cols-12 gap-8" style="max-width: 1680px;">
+    <aside class="md:col-span-3 lg:col-span-2 rail">
+      <div class="rail-section">Views</div>
+      
+      <a href="/gaoyao-leaderboard/" class="rail-link ">Overall</a>
+      <a href="/gaoyao-leaderboard/by-language.html" class="rail-link ">By Language</a>
+      <a href="/gaoyao-leaderboard/cultural-layer.html" class="rail-link ">3-Layer Framework</a>
+
+      <div class="rail-section">Insights</div>
+      <a href="/gaoyao-leaderboard/finding/f1.html" class="rail-link ">Specialization</a>
+      <a href="/gaoyao-leaderboard/finding/f2.html" class="rail-link ">Language Divide</a>
+      <a href="/gaoyao-leaderboard/finding/f3.html" class="rail-link ">Saturation</a>
+      <a href="/gaoyao-leaderboard/finding/f4.html" class="rail-link ">Thinking Gain</a>
+
+      <div class="rail-section">More</div>
+      <a href="/gaoyao-leaderboard/about.html" class="rail-link ">About</a>
+
+      <div class="mt-8 px-2 text-[11px] text-gray-500 leading-relaxed">
+        <p><b class="text-gray-700">26 languages · 51 nations</b></p>
+        <p class="mt-1">10 sub-layers · 3 cultural layers</p>
+        <p class="mt-2">Auto-eval covers the 5 truly objective sub-tasks; subjective and culturally-grounded sets require a judge LLM and are run by the maintainers. New submissions appear after admin review.</p>
+      </div>
+    </aside>
+
+    <main class="md:col-span-9 lg:col-span-10 min-w-0">
+      
+<div class="mb-4">
+  <a href="/gaoyao-leaderboard/" class="text-xs text-gray-500 hover:underline">← Back to leaderboard</a>
+</div>
+
+<div class="card card-pad mb-6">
+  <div class="flex items-start justify-between flex-wrap gap-2">
+    <div>
+      <h1 class="page">SuperBLEnD</h1>
+      <div class="text-sm text-gray-500 mt-1 flex gap-3 items-center">
+        <span class="pill bg-gray-100 text-gray-700">Cross layer</span>
+        <span class="pill bg-gray-100 text-gray-700">Cross-Culture</span>
+        <span class="pill bg-blue-100 text-blue-800">hybrid</span>
+        <span class="pill pill-judge">judge required</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card overflow-x-auto">
+  <table class="lb w-full">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Model</th>
+        <th>Vendor</th>
+        <th class="text-right">Params</th>
+        <th class="text-right">Overall</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+      <tr>
+        <td class="text-gray-400">1</td>
+        <td><a href="/gaoyao-leaderboard/model/o3.html" class="font-medium hover:underline" style="color: var(--ink);">o3</a></td>
+        <td class="text-gray-600">OpenAI</td>
+        <td class="text-right text-gray-600">—</td>
+        <td class="score-cell text-right font-semibold">75.8</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">2</td>
+        <td><a href="/gaoyao-leaderboard/model/gemini-2.5-pro.html" class="font-medium hover:underline" style="color: var(--ink);">Gemini 2.5 Pro</a></td>
+        <td class="text-gray-600">Google</td>
+        <td class="text-right text-gray-600">—</td>
+        <td class="score-cell text-right font-semibold">74.9</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">3</td>
+        <td><a href="/gaoyao-leaderboard/model/grok-3.html" class="font-medium hover:underline" style="color: var(--ink);">Grok 3</a></td>
+        <td class="text-gray-600">xAI</td>
+        <td class="text-right text-gray-600">—</td>
+        <td class="score-cell text-right font-semibold">74.5</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">4</td>
+        <td><a href="/gaoyao-leaderboard/model/claude-sonnet-4-5-20250929.html" class="font-medium hover:underline" style="color: var(--ink);">Claude Sonnet 4.5</a></td>
+        <td class="text-gray-600">Anthropic</td>
+        <td class="text-right text-gray-600">—</td>
+        <td class="score-cell text-right font-semibold">73.7</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">5</td>
+        <td><a href="/gaoyao-leaderboard/model/gpt-5-chat-latest.html" class="font-medium hover:underline" style="color: var(--ink);">GPT-5 Chat</a></td>
+        <td class="text-gray-600">OpenAI</td>
+        <td class="text-right text-gray-600">—</td>
+        <td class="score-cell text-right font-semibold">73.0</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">6</td>
+        <td><a href="/gaoyao-leaderboard/model/gpt-4o.html" class="font-medium hover:underline" style="color: var(--ink);">GPT-4o</a></td>
+        <td class="text-gray-600">OpenAI</td>
+        <td class="text-right text-gray-600">—</td>
+        <td class="score-cell text-right font-semibold">72.6</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">7</td>
+        <td><a href="/gaoyao-leaderboard/model/o4-mini.html" class="font-medium hover:underline" style="color: var(--ink);">o4-mini</a></td>
+        <td class="text-gray-600">OpenAI</td>
+        <td class="text-right text-gray-600">—</td>
+        <td class="score-cell text-right font-semibold">71.8</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">8</td>
+        <td><a href="/gaoyao-leaderboard/model/deepseek-r1.html" class="font-medium hover:underline" style="color: var(--ink);">DeepSeek-R1</a></td>
+        <td class="text-gray-600">DeepSeek</td>
+        <td class="text-right text-gray-600">671B</td>
+        <td class="score-cell text-right font-semibold">70.6</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">9</td>
+        <td><a href="/gaoyao-leaderboard/model/doubao-seed-1-6-250615.html" class="font-medium hover:underline" style="color: var(--ink);">Doubao-Seed-1.6</a></td>
+        <td class="text-gray-600">ByteDance</td>
+        <td class="text-right text-gray-600">—</td>
+        <td class="score-cell text-right font-semibold">70.5</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">10</td>
+        <td><a href="/gaoyao-leaderboard/model/doubao-seed-1-6-thinking-250715.html" class="font-medium hover:underline" style="color: var(--ink);">Doubao-Seed-1.6 (think)</a></td>
+        <td class="text-gray-600">ByteDance</td>
+        <td class="text-right text-gray-600">—</td>
+        <td class="score-cell text-right font-semibold">70.4</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">11</td>
+        <td><a href="/gaoyao-leaderboard/model/930-pangu-718b-sft-0shot.html" class="font-medium hover:underline" style="color: var(--ink);">openPangu-Ultra-MoE-718B-V1.1</a></td>
+        <td class="text-gray-600">openPangu</td>
+        <td class="text-right text-gray-600">718B</td>
+        <td class="score-cell text-right font-semibold">69.3</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">12</td>
+        <td><a href="/gaoyao-leaderboard/model/qwen3-235b-a22b-instruct.html" class="font-medium hover:underline" style="color: var(--ink);">Qwen3-235B-A22B</a></td>
+        <td class="text-gray-600">Alibaba</td>
+        <td class="text-right text-gray-600">235B</td>
+        <td class="score-cell text-right font-semibold">69.3</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">13</td>
+        <td><a href="/gaoyao-leaderboard/model/qwen-max.html" class="font-medium hover:underline" style="color: var(--ink);">Qwen-Max</a></td>
+        <td class="text-gray-600">Alibaba</td>
+        <td class="text-right text-gray-600">—</td>
+        <td class="score-cell text-right font-semibold">68.7</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">14</td>
+        <td><a href="/gaoyao-leaderboard/model/qwen3-14b-think.html" class="font-medium hover:underline" style="color: var(--ink);">Qwen3-14B (think)</a></td>
+        <td class="text-gray-600">Alibaba</td>
+        <td class="text-right text-gray-600">14B</td>
+        <td class="score-cell text-right font-semibold">68.0</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">15</td>
+        <td><a href="/gaoyao-leaderboard/model/deepseek-v3.1-mindie.html" class="font-medium hover:underline" style="color: var(--ink);">DeepSeek-V3.1</a></td>
+        <td class="text-gray-600">DeepSeek</td>
+        <td class="text-right text-gray-600">671B</td>
+        <td class="score-cell text-right font-semibold">67.1</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">16</td>
+        <td><a href="/gaoyao-leaderboard/model/meta-llama-3.1-405b-instruct.html" class="font-medium hover:underline" style="color: var(--ink);">Llama-3.1-405B</a></td>
+        <td class="text-gray-600">Meta</td>
+        <td class="text-right text-gray-600">405B</td>
+        <td class="score-cell text-right font-semibold">65.8</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">17</td>
+        <td><a href="/gaoyao-leaderboard/model/deepseek-r1-distill-qwen-14b-think.html" class="font-medium hover:underline" style="color: var(--ink);">DS-R1-Distill-Qwen-14B</a></td>
+        <td class="text-gray-600">DeepSeek</td>
+        <td class="text-right text-gray-600">14B</td>
+        <td class="score-cell text-right font-semibold">65.5</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">18</td>
+        <td><a href="/gaoyao-leaderboard/model/qwen3-8b-think.html" class="font-medium hover:underline" style="color: var(--ink);">Qwen3-8B (think)</a></td>
+        <td class="text-gray-600">Alibaba</td>
+        <td class="text-right text-gray-600">8B</td>
+        <td class="score-cell text-right font-semibold">63.3</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">19</td>
+        <td><a href="/gaoyao-leaderboard/model/gemma-3-12b-it-no-think.html" class="font-medium hover:underline" style="color: var(--ink);">Gemma-3-12B-IT</a></td>
+        <td class="text-gray-600">Google</td>
+        <td class="text-right text-gray-600">12B</td>
+        <td class="score-cell text-right font-semibold">60.4</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">20</td>
+        <td><a href="/gaoyao-leaderboard/model/qwen3-8b-no-think.html" class="font-medium hover:underline" style="color: var(--ink);">Qwen3-8B (no-think)</a></td>
+        <td class="text-gray-600">Alibaba</td>
+        <td class="text-right text-gray-600">8B</td>
+        <td class="score-cell text-right font-semibold">57.5</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">21</td>
+        <td><a href="/gaoyao-leaderboard/model/llama-3.1-8b-no-think.html" class="font-medium hover:underline" style="color: var(--ink);">Llama-3.1-8B</a></td>
+        <td class="text-gray-600">Meta</td>
+        <td class="text-right text-gray-600">8B</td>
+        <td class="score-cell text-right font-semibold">55.5</td>
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400">22</td>
+        <td><a href="/gaoyao-leaderboard/model/minstral-8b-instruct-no-think.html" class="font-medium hover:underline" style="color: var(--ink);">Mistral-8B-Instruct</a></td>
+        <td class="text-gray-600">Mistral</td>
+        <td class="text-right text-gray-600">8B</td>
+        <td class="score-cell text-right font-semibold">49.2</td>
+      </tr>
+      
+    </tbody>
+  </table>
+</div>
+
+    </main>
+  </div>
+
+  <footer>
+    <div class="mx-auto px-10 flex justify-between items-center flex-wrap gap-3" style="max-width: 1680px;">
+      <span>皋陶 GaoYao · Scores on a 0–100 scale · live-computed from raw eval results</span>
+      <span class="flex items-center gap-3 text-gray-400">
+        <span class="text-[11px]">built by</span>
+        <img src="/gaoyao-leaderboard/static/logo/prism-mark.svg?v=2" alt="PRISM" style="width: 22px; height: 22px;">
+        <span class="font-semibold tracking-widest" style="color: var(--ink-2);">PRISM</span>
+      </span>
+    </div>
+  </footer>
+</body>
+</html>

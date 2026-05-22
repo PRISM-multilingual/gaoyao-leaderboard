@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>F3 Saturation · GaoYao</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="/gaoyao-leaderboard/static/logo/favicon.png?v=2">
+  <style>
+    :root {
+      --hw-red:    #B91C1C;   /* deeper, less saturated than HW red */
+      --hw-red-2:  #7F1D1D;
+      --ink:       #18181B;
+      --ink-2:     #3F3F46;
+      --muted:     #71717A;
+      --line:      #E4E4E7;
+      --line-2:    #F4F4F5;
+      --bg:        #FAFAF9;
+      --paper:     #FFFFFF;
+    }
+    html { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+    [x-cloak] { display: none !important; }
+    body { background: var(--bg); color: var(--ink); font-size: 14px; line-height: 1.5; }
+    .font-serif-zh { font-family: 'Noto Serif SC', 'Songti SC', serif; letter-spacing: 0.02em; }
+    .font-mono    { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+    /* "GaoYao" wordmark */
+    .wordmark { font-family: 'Noto Serif SC', serif; font-weight: 700; letter-spacing: 0.04em; }
+
+    /* topbar */
+    .topbar { background: var(--paper); border-bottom: 1px solid var(--line); }
+    .topbar-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 32px; }
+    .nav-pill { padding: 6px 14px; font-size: 13px; color: var(--ink-2); border-radius: 999px; transition: all 0.15s; }
+    .nav-pill:hover { background: var(--line-2); color: var(--ink); }
+    .nav-pill.active { background: var(--ink); color: white; }
+    .btn-primary { background: var(--hw-red); color: white; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; transition: all 0.15s; }
+    .btn-primary:hover { background: var(--hw-red-2); }
+
+    /* side rail */
+    .rail { position: sticky; top: 24px; align-self: start; }
+    .rail-section { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 20px; margin-bottom: 8px; padding: 0 12px; }
+    .rail-link { display: block; padding: 9px 14px; border-radius: 6px; font-size: 14.5px; color: var(--ink-2); transition: all 0.12s; }
+    .rail-link:hover { background: var(--line-2); color: var(--ink); }
+    .rail-link.active { background: rgba(185,28,28,0.08); color: var(--hw-red); font-weight: 600; box-shadow: inset 2px 0 0 var(--hw-red); }
+
+    /* cards */
+    .card { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; }
+    .card-tight { padding: 16px 20px; }
+    .card-pad   { padding: 24px 28px; }
+
+    /* heading rhythm */
+    h1.page { font-family: 'Noto Serif SC', serif; font-size: 28px; font-weight: 700; letter-spacing: -0.005em; color: var(--ink); margin: 0; }
+    .page-lede { font-size: 14px; color: var(--muted); margin-top: 6px; line-height: 1.55; max-width: 80ch; }
+
+    /* tables */
+    table.lb { border-collapse: separate; border-spacing: 0; width: 100%; }
+    table.lb th, table.lb td { padding: 9px 14px; font-size: 13px; vertical-align: middle; }
+    table.lb thead th { font-weight: 600; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); background: var(--line-2); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 1; }
+    table.lb tbody tr:hover { background: rgba(185,28,28,0.025); }
+    table.lb tbody tr + tr td { border-top: 1px solid var(--line-2); }
+    .score-cell { font-variant-numeric: tabular-nums; }
+    .score-top { font-weight: 700; color: var(--hw-red); }
+
+    /* pills */
+    .pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 11px; font-weight: 500; border-radius: 999px; line-height: 1.4; }
+    .pill-open    { background: #ECFDF5; color: #047857; }
+    .pill-closed  { background: #F4F4F5; color: #52525B; }
+    .pill-judge   { background: #FEF3C7; color: #92400E; }
+    .pill-think   { background: #FAF5FF; color: #6B21A8; }
+    .pill-tier-H  { background: #ECFDF5; color: #047857; }
+    .pill-tier-M  { background: #FEFCE8; color: #854D0E; }
+    .pill-tier-L  { background: #FEE2E2; color: #991B1B; }
+
+    /* score bar */
+    .bar-track { background: var(--line-2); border-radius: 3px; height: 8px; overflow: hidden; }
+    .bar-fill  { background: var(--hw-red); height: 100%; border-radius: 3px; }
+
+    /* footer */
+    footer { background: var(--paper); border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0; font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <!-- data-cutoff banner -->
+  <div style="background: linear-gradient(90deg, #FEF2F2 0%, #FFFFFF 60%); border-bottom: 1px solid #FCE7E7;">
+    <div class="mx-auto px-6 lg:px-10 py-1.5 flex items-center gap-2 text-xs" style="max-width: 1680px; color: #7F1D1D;">
+      <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: var(--hw-red);"></span>
+      <span><b>数据截止</b> · 2025 年 11 月</span>
+      <span class="text-gray-400 ml-1">— 后续提交的模型经审核后即时上榜</span>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="topbar-inner max-w-none">
+      <a href="/gaoyao-leaderboard/zh/" class="flex items-center gap-3">
+        <span class="inline-block w-1 h-9" style="background: var(--hw-red);"></span>
+        <span>
+          <div class="wordmark text-xl text-black">皋陶 · GaoYao</div>
+          <div class="text-[11px] text-gray-500 -mt-1">Multilingual & Multicultural LLM Leaderboard · ACL 2026</div>
+        </span>
+      </a>
+      <nav class="flex items-center gap-2">
+        <a href="https://arxiv.org/abs/2604.20225" class="nav-pill">Paper</a>
+        <a href="https://github.com/lunyiliu/GaoYao" class="nav-pill">GitHub</a>
+        <a href="/gaoyao-leaderboard/zh/about.html" class="nav-pill ">About</a>
+        <!-- language toggle -->
+        <a href="/gaoyao-leaderboard/finding/f3.html" class="nav-pill" title="Switch language">EN</a>
+        
+      </nav>
+    </div>
+  </header>
+
+  <div class="mx-auto px-6 lg:px-10 py-8 grid grid-cols-1 md:grid-cols-12 gap-8" style="max-width: 1680px;">
+    <aside class="md:col-span-3 lg:col-span-2 rail">
+      <div class="rail-section">视图</div>
+      
+      <a href="/gaoyao-leaderboard/zh/" class="rail-link ">总榜</a>
+      <a href="/gaoyao-leaderboard/zh/by-language.html" class="rail-link ">按语言榜</a>
+      <a href="/gaoyao-leaderboard/zh/cultural-layer.html" class="rail-link ">三层文化框架</a>
+
+      <div class="rail-section">洞察</div>
+      <a href="/gaoyao-leaderboard/zh/finding/f1.html" class="rail-link ">模型专长</a>
+      <a href="/gaoyao-leaderboard/zh/finding/f2.html" class="rail-link ">语言鸿沟</a>
+      <a href="/gaoyao-leaderboard/zh/finding/f3.html" class="rail-link active">任务饱和度</a>
+      <a href="/gaoyao-leaderboard/zh/finding/f4.html" class="rail-link ">Thinking 增益</a>
+
+      <div class="rail-section">其他</div>
+      <a href="/gaoyao-leaderboard/zh/about.html" class="rail-link ">关于</a>
+
+      <div class="mt-8 px-2 text-[11px] text-gray-500 leading-relaxed">
+        <p><b class="text-gray-700">26 languages · 51 nations</b></p>
+        <p class="mt-1">10 sub-layers · 3 cultural layers</p>
+        <p class="mt-2">自动评测覆盖 5 个真客观子任务；主观与文化深度子集需 Judge 模型，由维护方运行。新提交需管理员审核通过才上榜。</p>
+      </div>
+    </aside>
+
+    <main class="md:col-span-9 lg:col-span-10 min-w-0">
+      
+<div class="mb-6">
+  <h1 class="page">任务饱和度分层</h1>
+  <p class="page-lede">各子能力上的模型分布。箱体与须线越长，模型差异越大；水平线为中位数。本工作自建的数据集以红色标注。</p>
+</div>
+
+<div class="card card-pad">
+  <div id="box" style="height: 520px;"></div>
+  <p class="text-xs text-gray-500 mt-2">Tukey 须线（1.5×IQR），不显示 outlier。</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+  <div class="card card-pad" style="background: #FAFBFD;">
+    <div class="font-semibold mb-1" style="color: #3B82F6;">前沿（蓝，Ours）— 高 IQR</div>
+    <p class="text-xs text-gray-700">主观与文化深度评测仍能区分模型 — 这正是 GaoYao 相对饱和的公开基准的增量价值。</p>
+  </div>
+  <div class="card card-pad" style="background: #FDF7F8;">
+    <div class="font-semibold mb-1" style="color: var(--hw-red);">饱和区（粉，Existing）— 中位数 ≳ 90</div>
+    <p class="text-xs text-gray-700">阅读、数学、单文化等聚集在高位。紧凑模型在此几乎与旗舰平分秋色。</p>
+  </div>
+</div>
+
+<script>
+  const data = {"datasets": [{"key": "S-AlpacaEval", "label": "Instruct-Follow", "kind": "Ours", "needs_judge": true, "iqr": 34.6, "median": 18.9}, {"key": "S-MT-Bench", "label": "Dialogue", "kind": "Ours", "needs_judge": true, "iqr": 34.4, "median": 33.3}, {"key": "SuperBLEnD", "label": "Cross-Culture", "kind": "Ours", "needs_judge": true, "iqr": 6.8, "median": 69.3}, {"key": "INCLUDE", "label": "Knowledge", "kind": "Existing", "needs_judge": false, "iqr": 16.1, "median": 75.7}, {"key": "MMMLU", "label": "Reasoning", "kind": "Existing", "needs_judge": false, "iqr": 16.8, "median": 81.1}, {"key": "Flores-101", "label": "Translation", "kind": "Existing", "needs_judge": false, "iqr": 11.5, "median": 85.8}, {"key": "MGSM", "label": "Math", "kind": "Existing", "needs_judge": false, "iqr": 7.9, "median": 90.8}, {"key": "Belebele", "label": "Reading", "kind": "Existing", "needs_judge": false, "iqr": 4.9, "median": 92.7}, {"key": "Cross-Cultural", "label": "Cross-Culture", "kind": "Existing", "needs_judge": true, "iqr": 6.8, "median": 91.2}, {"key": "Mono-Cultural", "label": "Mono-Culture", "kind": "Existing", "needs_judge": true, "iqr": 9.4, "median": 92.8}], "boxes": [[1.0, 7.5, 18.9, 42.1, 84.0], [3.1, 17.7, 33.3, 52.1, 87.5], [55.5, 65.6, 69.3, 72.4, 75.8], [43.9, 67.3, 75.7, 83.4, 95.4], [44.7, 69.6, 81.1, 86.4, 91.9], [59.4, 76.2, 85.8, 87.7, 90.0], [73.6, 85.3, 90.8, 93.2, 99.2], [82.7, 89.4, 92.7, 94.3, 97.6], [77.9, 87.6, 91.2, 94.5, 97.4], [76.9, 86.3, 92.8, 95.7, 99.8]]};
+  // colour scheme matches paper Fig 7: Ours=blue (#5A8DD2), Existing=pink (#DA8A8A)
+  const BLUE   = '#6E97D6';
+  const BLUE_E = '#3760A3';
+  const PINK   = '#D88989';
+  const PINK_E = '#A8514C';
+
+  const chart = echarts.init(document.getElementById('box'));
+  chart.setOption({
+    tooltip: { trigger: 'item',
+      formatter: p => {
+        const d = data.datasets[p.dataIndex];
+        const b = data.boxes[p.dataIndex];
+        return `<b>${d.label} (${d.kind})</b><br>median: ${d.median}<br>IQR: ${d.iqr}<br>whisker: ${b[0]} → ${b[4]}`;
+      }
+    },
+    grid: { left: 60, right: 30, top: 30, bottom: 90 },
+    xAxis: {
+      type: 'category',
+      data: data.datasets.map(d => d.label),
+      axisLabel: {
+        rotate: 28, interval: 0, fontSize: 11,
+        formatter: (val, idx) => {
+          const k = data.datasets[idx].kind;
+          return `{${k}|${val}}\n{${k}_sub|(${k})}`;
+        },
+        rich: {
+          'Ours':       { color: '#B91C1C', fontWeight: 700 },
+          'Ours_sub':   { color: '#B91C1C', fontSize: 10 },
+          'Existing':   { color: '#52525B' },
+          'Existing_sub': { color: '#71717A', fontSize: 10 },
+        },
+      },
+    },
+    yAxis: { type: 'value', min: 0, max: 100, name: 'Task Average Score', nameTextStyle: { fontSize: 11, color: '#71717A' } },
+    series: [{
+      type: 'boxplot',
+      data: data.boxes.map((b, i) => ({
+        value: b,
+        itemStyle: {
+          color: data.datasets[i].kind === 'Ours' ? BLUE : PINK,
+          borderColor: data.datasets[i].kind === 'Ours' ? BLUE_E : PINK_E,
+          borderWidth: 1.5,
+        },
+      })),
+    }],
+  });
+  window.addEventListener('resize', () => chart.resize());
+</script>
+
+    </main>
+  </div>
+
+  <footer>
+    <div class="mx-auto px-10 flex justify-between items-center flex-wrap gap-3" style="max-width: 1680px;">
+      <span>皋陶 GaoYao · 得分 0–100 · 基于原始评测结果实时聚合</span>
+      <span class="flex items-center gap-3 text-gray-400">
+        <span class="text-[11px]">由</span>
+        <img src="/gaoyao-leaderboard/static/logo/prism-mark.svg?v=2" alt="PRISM" style="width: 22px; height: 22px;">
+        <span class="font-semibold tracking-widest" style="color: var(--ink-2);">PRISM</span>
+      </span>
+    </div>
+  </footer>
+</body>
+</html>

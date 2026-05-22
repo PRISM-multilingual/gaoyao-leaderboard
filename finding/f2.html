@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>F2 Language Divide · GaoYao</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="/gaoyao-leaderboard/static/logo/favicon.png?v=2">
+  <style>
+    :root {
+      --hw-red:    #B91C1C;   /* deeper, less saturated than HW red */
+      --hw-red-2:  #7F1D1D;
+      --ink:       #18181B;
+      --ink-2:     #3F3F46;
+      --muted:     #71717A;
+      --line:      #E4E4E7;
+      --line-2:    #F4F4F5;
+      --bg:        #FAFAF9;
+      --paper:     #FFFFFF;
+    }
+    html { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+    [x-cloak] { display: none !important; }
+    body { background: var(--bg); color: var(--ink); font-size: 14px; line-height: 1.5; }
+    .font-serif-zh { font-family: 'Noto Serif SC', 'Songti SC', serif; letter-spacing: 0.02em; }
+    .font-mono    { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+    /* "GaoYao" wordmark */
+    .wordmark { font-family: 'Noto Serif SC', serif; font-weight: 700; letter-spacing: 0.04em; }
+
+    /* topbar */
+    .topbar { background: var(--paper); border-bottom: 1px solid var(--line); }
+    .topbar-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 32px; }
+    .nav-pill { padding: 6px 14px; font-size: 13px; color: var(--ink-2); border-radius: 999px; transition: all 0.15s; }
+    .nav-pill:hover { background: var(--line-2); color: var(--ink); }
+    .nav-pill.active { background: var(--ink); color: white; }
+    .btn-primary { background: var(--hw-red); color: white; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; transition: all 0.15s; }
+    .btn-primary:hover { background: var(--hw-red-2); }
+
+    /* side rail */
+    .rail { position: sticky; top: 24px; align-self: start; }
+    .rail-section { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 20px; margin-bottom: 8px; padding: 0 12px; }
+    .rail-link { display: block; padding: 9px 14px; border-radius: 6px; font-size: 14.5px; color: var(--ink-2); transition: all 0.12s; }
+    .rail-link:hover { background: var(--line-2); color: var(--ink); }
+    .rail-link.active { background: rgba(185,28,28,0.08); color: var(--hw-red); font-weight: 600; box-shadow: inset 2px 0 0 var(--hw-red); }
+
+    /* cards */
+    .card { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; }
+    .card-tight { padding: 16px 20px; }
+    .card-pad   { padding: 24px 28px; }
+
+    /* heading rhythm */
+    h1.page { font-family: 'Noto Serif SC', serif; font-size: 28px; font-weight: 700; letter-spacing: -0.005em; color: var(--ink); margin: 0; }
+    .page-lede { font-size: 14px; color: var(--muted); margin-top: 6px; line-height: 1.55; max-width: 80ch; }
+
+    /* tables */
+    table.lb { border-collapse: separate; border-spacing: 0; width: 100%; }
+    table.lb th, table.lb td { padding: 9px 14px; font-size: 13px; vertical-align: middle; }
+    table.lb thead th { font-weight: 600; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); background: var(--line-2); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 1; }
+    table.lb tbody tr:hover { background: rgba(185,28,28,0.025); }
+    table.lb tbody tr + tr td { border-top: 1px solid var(--line-2); }
+    .score-cell { font-variant-numeric: tabular-nums; }
+    .score-top { font-weight: 700; color: var(--hw-red); }
+
+    /* pills */
+    .pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 11px; font-weight: 500; border-radius: 999px; line-height: 1.4; }
+    .pill-open    { background: #ECFDF5; color: #047857; }
+    .pill-closed  { background: #F4F4F5; color: #52525B; }
+    .pill-judge   { background: #FEF3C7; color: #92400E; }
+    .pill-think   { background: #FAF5FF; color: #6B21A8; }
+    .pill-tier-H  { background: #ECFDF5; color: #047857; }
+    .pill-tier-M  { background: #FEFCE8; color: #854D0E; }
+    .pill-tier-L  { background: #FEE2E2; color: #991B1B; }
+
+    /* score bar */
+    .bar-track { background: var(--line-2); border-radius: 3px; height: 8px; overflow: hidden; }
+    .bar-fill  { background: var(--hw-red); height: 100%; border-radius: 3px; }
+
+    /* footer */
+    footer { background: var(--paper); border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0; font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <!-- data-cutoff banner -->
+  <div style="background: linear-gradient(90deg, #FEF2F2 0%, #FFFFFF 60%); border-bottom: 1px solid #FCE7E7;">
+    <div class="mx-auto px-6 lg:px-10 py-1.5 flex items-center gap-2 text-xs" style="max-width: 1680px; color: #7F1D1D;">
+      <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: var(--hw-red);"></span>
+      <span><b>Data cutoff</b> · November 2025</span>
+      <span class="text-gray-400 ml-1">— newly submitted models appear after admin review</span>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="topbar-inner max-w-none">
+      <a href="/gaoyao-leaderboard/" class="flex items-center gap-3">
+        <span class="inline-block w-1 h-9" style="background: var(--hw-red);"></span>
+        <span>
+          <div class="wordmark text-xl text-black">皋陶 · GaoYao</div>
+          <div class="text-[11px] text-gray-500 -mt-1">Multilingual & Multicultural LLM Leaderboard · ACL 2026</div>
+        </span>
+      </a>
+      <nav class="flex items-center gap-2">
+        <a href="https://arxiv.org/abs/2604.20225" class="nav-pill">Paper</a>
+        <a href="https://github.com/lunyiliu/GaoYao" class="nav-pill">GitHub</a>
+        <a href="/gaoyao-leaderboard/about.html" class="nav-pill ">About</a>
+        <!-- language toggle -->
+        <a href="/gaoyao-leaderboard/zh/finding/f2.html" class="nav-pill" title="Switch language">中文</a>
+        
+      </nav>
+    </div>
+  </header>
+
+  <div class="mx-auto px-6 lg:px-10 py-8 grid grid-cols-1 md:grid-cols-12 gap-8" style="max-width: 1680px;">
+    <aside class="md:col-span-3 lg:col-span-2 rail">
+      <div class="rail-section">Views</div>
+      
+      <a href="/gaoyao-leaderboard/" class="rail-link ">Overall</a>
+      <a href="/gaoyao-leaderboard/by-language.html" class="rail-link ">By Language</a>
+      <a href="/gaoyao-leaderboard/cultural-layer.html" class="rail-link ">3-Layer Framework</a>
+
+      <div class="rail-section">Insights</div>
+      <a href="/gaoyao-leaderboard/finding/f1.html" class="rail-link ">Specialization</a>
+      <a href="/gaoyao-leaderboard/finding/f2.html" class="rail-link active">Language Divide</a>
+      <a href="/gaoyao-leaderboard/finding/f3.html" class="rail-link ">Saturation</a>
+      <a href="/gaoyao-leaderboard/finding/f4.html" class="rail-link ">Thinking Gain</a>
+
+      <div class="rail-section">More</div>
+      <a href="/gaoyao-leaderboard/about.html" class="rail-link ">About</a>
+
+      <div class="mt-8 px-2 text-[11px] text-gray-500 leading-relaxed">
+        <p><b class="text-gray-700">26 languages · 51 nations</b></p>
+        <p class="mt-1">10 sub-layers · 3 cultural layers</p>
+        <p class="mt-2">Auto-eval covers the 5 truly objective sub-tasks; subjective and culturally-grounded sets require a judge LLM and are run by the maintainers. New submissions appear after admin review.</p>
+      </div>
+    </aside>
+
+    <main class="md:col-span-9 lg:col-span-10 min-w-0">
+      
+<div class="mb-6">
+  <h1 class="page">Digital Divide · Geography &amp; Resources</h1>
+  <p class="page-lede">Per-language performance correlates with resource availability and geography. High-resource Western European and East Asian languages dominate; South Asia and Sub-Saharan Africa lag.</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div class="card card-pad">
+    <h2 class="font-semibold mb-2">High vs Low Resource Tier</h2>
+    <table class="lb w-full text-sm">
+      <thead>
+        <tr><th>Model</th><th class="text-right">H</th><th class="text-right">M</th><th class="text-right">L</th><th class="text-right">H−L</th></tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td>Gemini 2.5 Pro</td>
+          <td class="text-right">91.8</td>
+          <td class="text-right">91.6</td>
+          <td class="text-right">91.5</td>
+          <td class="text-right font-medium text-green-700">+0.3</td>
+        </tr>
+        
+        <tr>
+          <td>o3</td>
+          <td class="text-right">91.5</td>
+          <td class="text-right">91.2</td>
+          <td class="text-right">90.8</td>
+          <td class="text-right font-medium text-green-700">+0.7</td>
+        </tr>
+        
+        <tr>
+          <td>DeepSeek-R1</td>
+          <td class="text-right">83.6</td>
+          <td class="text-right">83.4</td>
+          <td class="text-right">82.2</td>
+          <td class="text-right font-medium text-amber-700">+1.4</td>
+        </tr>
+        
+        <tr>
+          <td>GPT-5 Chat</td>
+          <td class="text-right">87.8</td>
+          <td class="text-right">87.0</td>
+          <td class="text-right">86.3</td>
+          <td class="text-right font-medium text-amber-700">+1.5</td>
+        </tr>
+        
+        <tr>
+          <td>GPT-4o</td>
+          <td class="text-right">86.5</td>
+          <td class="text-right">85.4</td>
+          <td class="text-right">84.7</td>
+          <td class="text-right font-medium text-amber-700">+1.7</td>
+        </tr>
+        
+        <tr>
+          <td>Claude Sonnet 4.5</td>
+          <td class="text-right">91.0</td>
+          <td class="text-right">90.0</td>
+          <td class="text-right">88.8</td>
+          <td class="text-right font-medium text-amber-700">+2.2</td>
+        </tr>
+        
+        <tr>
+          <td>o4-mini</td>
+          <td class="text-right">90.3</td>
+          <td class="text-right">89.7</td>
+          <td class="text-right">88.1</td>
+          <td class="text-right font-medium text-amber-700">+2.2</td>
+        </tr>
+        
+        <tr>
+          <td>Grok 3</td>
+          <td class="text-right">87.9</td>
+          <td class="text-right">86.8</td>
+          <td class="text-right">85.0</td>
+          <td class="text-right font-medium text-amber-700">+2.8</td>
+        </tr>
+        
+        <tr>
+          <td>Doubao-Seed-1.6</td>
+          <td class="text-right">90.3</td>
+          <td class="text-right">88.9</td>
+          <td class="text-right">86.8</td>
+          <td class="text-right font-medium text-amber-700">+3.5</td>
+        </tr>
+        
+        <tr>
+          <td>Doubao-Seed-1.6 (think)</td>
+          <td class="text-right">90.0</td>
+          <td class="text-right">88.2</td>
+          <td class="text-right">86.5</td>
+          <td class="text-right font-medium text-amber-700">+3.5</td>
+        </tr>
+        
+        <tr>
+          <td>DeepSeek-V3.1</td>
+          <td class="text-right">84.5</td>
+          <td class="text-right">82.8</td>
+          <td class="text-right">80.6</td>
+          <td class="text-right font-medium text-amber-700">+3.9</td>
+        </tr>
+        
+        <tr>
+          <td>Llama-3.1-405B</td>
+          <td class="text-right">84.2</td>
+          <td class="text-right">82.9</td>
+          <td class="text-right">80.1</td>
+          <td class="text-right font-medium text-amber-700">+4.1</td>
+        </tr>
+        
+        <tr>
+          <td>openPangu-Ultra-MoE-718B-V1.1</td>
+          <td class="text-right">83.8</td>
+          <td class="text-right">81.8</td>
+          <td class="text-right">79.7</td>
+          <td class="text-right font-medium text-amber-700">+4.1</td>
+        </tr>
+        
+        <tr>
+          <td>Gemma-3-12B-IT</td>
+          <td class="text-right">71.9</td>
+          <td class="text-right">71.0</td>
+          <td class="text-right">67.1</td>
+          <td class="text-right font-medium text-amber-700">+4.8</td>
+        </tr>
+        
+        <tr>
+          <td>Qwen3-14B (think)</td>
+          <td class="text-right">87.4</td>
+          <td class="text-right">86.1</td>
+          <td class="text-right">81.2</td>
+          <td class="text-right font-medium text-amber-700">+6.2</td>
+        </tr>
+        
+      </tbody>
+    </table>
+    <p class="text-xs text-gray-500 mt-2">Sorted by smallest H−L gap. Flagships close the gap on objective MCQ tasks; the divide widens on Translation and subjective sub-layers.</p>
+  </div>
+
+  <div class="card card-pad">
+    <h2 class="font-semibold mb-2">By Geographic Region</h2>
+    <div id="region-chart" style="height: 460px;"></div>
+  </div>
+</div>
+
+<script>
+  const region = {"Claude Sonnet 4.5": {"AF": 81.06, "EA": 90.76, "EEU": 91.0, "MENA": 88.05, "SA": 91.37, "SEA": 90.48, "WEU": 91.23}, "DS-R1-Distill-Qwen-14B": {"AF": 30.45, "EA": 83.9, "EEU": 82.89, "MENA": 79.02, "SA": 57.63, "SEA": 82.27, "WEU": 84.98}, "DeepSeek-R1": {"AF": 82.53, "EA": 82.17, "EEU": 82.49, "MENA": 79.74, "SA": 86.56, "SEA": 84.75, "WEU": 84.47}, "DeepSeek-V3.1": {"AF": 77.36, "EA": 83.77, "EEU": 83.18, "MENA": 79.73, "SA": 84.48, "SEA": 83.88, "WEU": 84.76}, "Doubao-Seed-1.6": {"AF": 75.57, "EA": 90.65, "EEU": 90.04, "MENA": 84.8, "SA": 86.7, "SEA": 89.71, "WEU": 90.7}, "Doubao-Seed-1.6 (think)": {"AF": 75.92, "EA": 89.76, "EEU": 90.17, "MENA": 84.56, "SA": 85.97, "SEA": 88.96, "WEU": 90.43}, "GPT-4o": {"AF": 78.22, "EA": 85.6, "EEU": 86.95, "MENA": 82.48, "SA": 83.69, "SEA": 86.99, "WEU": 86.9}, "GPT-5 Chat": {"AF": 83.3, "EA": 87.85, "EEU": 87.61, "MENA": 82.89, "SA": 86.83, "SEA": 88.49, "WEU": 88.08}, "Gemini 2.5 Pro": {"AF": 88.28, "EA": 91.91, "EEU": 92.38, "MENA": 89.93, "SA": 90.5, "SEA": 91.86, "WEU": 91.86}, "Gemma-3-12B-IT": {"AF": 59.24, "EA": 70.48, "EEU": 71.98, "MENA": 66.15, "SA": 66.57, "SEA": 72.05, "WEU": 73.14}, "Grok 3": {"AF": 80.64, "EA": 87.25, "EEU": 88.56, "MENA": 83.89, "SA": 82.46, "SEA": 87.73, "WEU": 88.3}, "Llama-3.1-405B": {"AF": 73.66, "EA": 82.6, "EEU": 83.27, "MENA": 78.98, "SA": 78.04, "SEA": 84.43, "WEU": 85.6}, "Llama-3.1-8B": {"AF": 44.84, "EA": 64.66, "EEU": 68.66, "MENA": 59.41, "SA": 49.06, "SEA": 64.52, "WEU": 71.54}, "Mistral-8B-Instruct": {"AF": 17.59, "EA": 62.29, "EEU": 67.65, "MENA": 57.69, "SA": 45.36, "SEA": 60.2, "WEU": 70.11}, "Qwen-Max": {"AF": 63.49, "EA": 84.53, "EEU": 84.32, "MENA": 78.36, "SA": 75.31, "SEA": 84.03, "WEU": 85.4}, "Qwen3-14B (think)": {"AF": 60.71, "EA": 87.05, "EEU": 87.95, "MENA": 83.08, "SA": 81.45, "SEA": 86.73, "WEU": 87.72}, "Qwen3-235B-A22B": {"AF": 68.99, "EA": 83.95, "EEU": 82.47, "MENA": 78.47, "SA": 78.75, "SEA": 83.7, "WEU": 84.02}, "Qwen3-8B (no-think)": {"AF": 37.46, "EA": 78.88, "EEU": 79.2, "MENA": 71.98, "SA": 63.82, "SEA": 77.73, "WEU": 79.91}, "Qwen3-8B (think)": {"AF": 49.69, "EA": 85.32, "EEU": 86.47, "MENA": 81.15, "SA": 76.76, "SEA": 85.09, "WEU": 86.17}, "o3": {"AF": 88.98, "EA": 91.14, "EEU": 92.38, "MENA": 89.24, "SA": 89.45, "SEA": 92.01, "WEU": 91.62}, "o4-mini": {"AF": 83.4, "EA": 89.7, "EEU": 91.35, "MENA": 86.92, "SA": 86.14, "SEA": 90.29, "WEU": 90.77}, "openPangu-Ultra-MoE-718B-V1.1": {"AF": 79.52, "EA": 83.69, "EEU": 81.5, "MENA": 78.92, "SA": 85.3, "SEA": 82.53, "WEU": 83.95}};
+  const regions = ["WEU", "EEU", "EA", "SEA", "SA", "MENA", "AF"];
+  const labels = {
+    WEU: 'Western Europe', EEU: 'East Europe', EA: 'East Asia',
+    SEA: 'SE Asia', SA: 'South Asia', MENA: 'MENA', AF: 'Sub-Sah. Africa'
+  };
+  // pick top 8 by overall (region average)
+  const items = Object.entries(region).map(([m, rs]) => {
+    const vs = regions.map(r => rs[r] || 0);
+    return { model: m, values: vs, mean: vs.reduce((a,b)=>a+b,0)/vs.length };
+  }).sort((a,b) => b.mean - a.mean).slice(0, 8);
+
+  const chart = echarts.init(document.getElementById('region-chart'));
+  chart.setOption({
+    tooltip: { trigger: 'axis' },
+    legend: { type: 'scroll', top: 0, textStyle: { fontSize: 10 } },
+    grid: { left: 110, right: 20, top: 40, bottom: 30 },
+    xAxis: { type: 'value', min: 50, max: 100 },
+    yAxis: { type: 'category', data: regions.map(r => labels[r] || r) },
+    series: items.map(it => ({
+      name: it.model, type: 'bar', barWidth: 6, data: it.values,
+    })),
+  });
+  window.addEventListener('resize', () => chart.resize());
+</script>
+
+    </main>
+  </div>
+
+  <footer>
+    <div class="mx-auto px-10 flex justify-between items-center flex-wrap gap-3" style="max-width: 1680px;">
+      <span>皋陶 GaoYao · Scores on a 0–100 scale · live-computed from raw eval results</span>
+      <span class="flex items-center gap-3 text-gray-400">
+        <span class="text-[11px]">built by</span>
+        <img src="/gaoyao-leaderboard/static/logo/prism-mark.svg?v=2" alt="PRISM" style="width: 22px; height: 22px;">
+        <span class="font-semibold tracking-widest" style="color: var(--ink-2);">PRISM</span>
+      </span>
+    </div>
+  </footer>
+</body>
+</html>

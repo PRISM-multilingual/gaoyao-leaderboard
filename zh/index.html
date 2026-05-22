@@ -1,0 +1,983 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>多语言多文化 大模型评测榜 · GaoYao</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="/gaoyao-leaderboard/static/logo/favicon.png?v=2">
+  <style>
+    :root {
+      --hw-red:    #B91C1C;   /* deeper, less saturated than HW red */
+      --hw-red-2:  #7F1D1D;
+      --ink:       #18181B;
+      --ink-2:     #3F3F46;
+      --muted:     #71717A;
+      --line:      #E4E4E7;
+      --line-2:    #F4F4F5;
+      --bg:        #FAFAF9;
+      --paper:     #FFFFFF;
+    }
+    html { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+    [x-cloak] { display: none !important; }
+    body { background: var(--bg); color: var(--ink); font-size: 14px; line-height: 1.5; }
+    .font-serif-zh { font-family: 'Noto Serif SC', 'Songti SC', serif; letter-spacing: 0.02em; }
+    .font-mono    { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+    /* "GaoYao" wordmark */
+    .wordmark { font-family: 'Noto Serif SC', serif; font-weight: 700; letter-spacing: 0.04em; }
+
+    /* topbar */
+    .topbar { background: var(--paper); border-bottom: 1px solid var(--line); }
+    .topbar-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 32px; }
+    .nav-pill { padding: 6px 14px; font-size: 13px; color: var(--ink-2); border-radius: 999px; transition: all 0.15s; }
+    .nav-pill:hover { background: var(--line-2); color: var(--ink); }
+    .nav-pill.active { background: var(--ink); color: white; }
+    .btn-primary { background: var(--hw-red); color: white; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; transition: all 0.15s; }
+    .btn-primary:hover { background: var(--hw-red-2); }
+
+    /* side rail */
+    .rail { position: sticky; top: 24px; align-self: start; }
+    .rail-section { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 20px; margin-bottom: 8px; padding: 0 12px; }
+    .rail-link { display: block; padding: 9px 14px; border-radius: 6px; font-size: 14.5px; color: var(--ink-2); transition: all 0.12s; }
+    .rail-link:hover { background: var(--line-2); color: var(--ink); }
+    .rail-link.active { background: rgba(185,28,28,0.08); color: var(--hw-red); font-weight: 600; box-shadow: inset 2px 0 0 var(--hw-red); }
+
+    /* cards */
+    .card { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; }
+    .card-tight { padding: 16px 20px; }
+    .card-pad   { padding: 24px 28px; }
+
+    /* heading rhythm */
+    h1.page { font-family: 'Noto Serif SC', serif; font-size: 28px; font-weight: 700; letter-spacing: -0.005em; color: var(--ink); margin: 0; }
+    .page-lede { font-size: 14px; color: var(--muted); margin-top: 6px; line-height: 1.55; max-width: 80ch; }
+
+    /* tables */
+    table.lb { border-collapse: separate; border-spacing: 0; width: 100%; }
+    table.lb th, table.lb td { padding: 9px 14px; font-size: 13px; vertical-align: middle; }
+    table.lb thead th { font-weight: 600; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); background: var(--line-2); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 1; }
+    table.lb tbody tr:hover { background: rgba(185,28,28,0.025); }
+    table.lb tbody tr + tr td { border-top: 1px solid var(--line-2); }
+    .score-cell { font-variant-numeric: tabular-nums; }
+    .score-top { font-weight: 700; color: var(--hw-red); }
+
+    /* pills */
+    .pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 11px; font-weight: 500; border-radius: 999px; line-height: 1.4; }
+    .pill-open    { background: #ECFDF5; color: #047857; }
+    .pill-closed  { background: #F4F4F5; color: #52525B; }
+    .pill-judge   { background: #FEF3C7; color: #92400E; }
+    .pill-think   { background: #FAF5FF; color: #6B21A8; }
+    .pill-tier-H  { background: #ECFDF5; color: #047857; }
+    .pill-tier-M  { background: #FEFCE8; color: #854D0E; }
+    .pill-tier-L  { background: #FEE2E2; color: #991B1B; }
+
+    /* score bar */
+    .bar-track { background: var(--line-2); border-radius: 3px; height: 8px; overflow: hidden; }
+    .bar-fill  { background: var(--hw-red); height: 100%; border-radius: 3px; }
+
+    /* footer */
+    footer { background: var(--paper); border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0; font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <!-- data-cutoff banner -->
+  <div style="background: linear-gradient(90deg, #FEF2F2 0%, #FFFFFF 60%); border-bottom: 1px solid #FCE7E7;">
+    <div class="mx-auto px-6 lg:px-10 py-1.5 flex items-center gap-2 text-xs" style="max-width: 1680px; color: #7F1D1D;">
+      <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: var(--hw-red);"></span>
+      <span><b>数据截止</b> · 2025 年 11 月</span>
+      <span class="text-gray-400 ml-1">— 后续提交的模型经审核后即时上榜</span>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="topbar-inner max-w-none">
+      <a href="/gaoyao-leaderboard/zh/" class="flex items-center gap-3">
+        <span class="inline-block w-1 h-9" style="background: var(--hw-red);"></span>
+        <span>
+          <div class="wordmark text-xl text-black">皋陶 · GaoYao</div>
+          <div class="text-[11px] text-gray-500 -mt-1">Multilingual & Multicultural LLM Leaderboard · ACL 2026</div>
+        </span>
+      </a>
+      <nav class="flex items-center gap-2">
+        <a href="https://arxiv.org/abs/2604.20225" class="nav-pill">Paper</a>
+        <a href="https://github.com/lunyiliu/GaoYao" class="nav-pill">GitHub</a>
+        <a href="/gaoyao-leaderboard/zh/about.html" class="nav-pill ">About</a>
+        <!-- language toggle -->
+        <a href="/gaoyao-leaderboard/" class="nav-pill" title="Switch language">EN</a>
+        
+      </nav>
+    </div>
+  </header>
+
+  <div class="mx-auto px-6 lg:px-10 py-8 grid grid-cols-1 md:grid-cols-12 gap-8" style="max-width: 1680px;">
+    <aside class="md:col-span-3 lg:col-span-2 rail">
+      <div class="rail-section">视图</div>
+      
+      <a href="/gaoyao-leaderboard/zh/" class="rail-link active">总榜</a>
+      <a href="/gaoyao-leaderboard/zh/by-language.html" class="rail-link ">按语言榜</a>
+      <a href="/gaoyao-leaderboard/zh/cultural-layer.html" class="rail-link ">三层文化框架</a>
+
+      <div class="rail-section">洞察</div>
+      <a href="/gaoyao-leaderboard/zh/finding/f1.html" class="rail-link ">模型专长</a>
+      <a href="/gaoyao-leaderboard/zh/finding/f2.html" class="rail-link ">语言鸿沟</a>
+      <a href="/gaoyao-leaderboard/zh/finding/f3.html" class="rail-link ">任务饱和度</a>
+      <a href="/gaoyao-leaderboard/zh/finding/f4.html" class="rail-link ">Thinking 增益</a>
+
+      <div class="rail-section">其他</div>
+      <a href="/gaoyao-leaderboard/zh/about.html" class="rail-link ">关于</a>
+
+      <div class="mt-8 px-2 text-[11px] text-gray-500 leading-relaxed">
+        <p><b class="text-gray-700">26 languages · 51 nations</b></p>
+        <p class="mt-1">10 sub-layers · 3 cultural layers</p>
+        <p class="mt-2">自动评测覆盖 5 个真客观子任务；主观与文化深度子集需 Judge 模型，由维护方运行。新提交需管理员审核通过才上榜。</p>
+      </div>
+    </aside>
+
+    <main class="md:col-span-9 lg:col-span-10 min-w-0">
+      
+
+<div class="mb-6 flex items-start gap-5">
+  <a href="/gaoyao-leaderboard/zh/about.html" class="font-serif-zh shrink-0 leading-none hover:opacity-80 transition" style="font-size: 56px; color: var(--hw-red); letter-spacing: 0.04em;" title="名字的来源">皋陶</a>
+  <div class="flex-1 pt-1">
+    <h1 class="page">多语言多文化 大模型评测榜</h1>
+    <p class="page-lede">皋陶（Gāo Yáo）——中国上古司法之祖，传说判案公正。本榜以此为名，跨 26 种语言、51 个国家/地区评测大模型的多语言公平性。</p>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="mb-4 flex items-baseline justify-between">
+  <h2 class="font-bold" style="font-size: 17px; color: var(--ink);">
+    <span class="inline-block w-1 h-4 mr-2 align-middle" style="background: #16a34a;"></span>
+    🟢 开源榜
+  </h2>
+  <span class="text-xs text-gray-500">12 个开源</span>
+</div>
+<div class="card overflow-x-auto mb-8">
+  <table class="lb">
+    <thead>
+      <tr>
+        <th class="text-left" style="width: 38px;">#</th>
+        <th class="text-left">模型</th>
+        <th class="text-left">厂商</th>
+        <th class="text-right" style="width: 64px;">参数</th>
+        <th class="text-right" style="width: 78px;">总分</th>
+        
+        <th class="text-right" style="font-size: 10px;">Math</th>
+        
+        <th class="text-right" style="font-size: 10px;">Reasoning</th>
+        
+        <th class="text-right" style="font-size: 10px;">Knowledge</th>
+        
+        <th class="text-right" style="font-size: 10px;">Instruct</th>
+        
+        <th class="text-right" style="font-size: 10px;">Dialogue</th>
+        
+        <th class="text-right" style="font-size: 10px;">Reading</th>
+        
+        <th class="text-right" style="font-size: 10px;">Translation</th>
+        
+        <th class="text-right" style="font-size: 10px;">Cross SA</th>
+        
+        <th class="text-right" style="font-size: 10px;">Cross SB</th>
+        
+        <th class="text-right" style="font-size: 10px;">Mono CS</th>
+        
+      </tr>
+    </thead>
+    <tbody>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">1</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/deepseek-r1.html" class="font-medium hover:underline" style="color: var(--ink);">DeepSeek-R1</a>
+          <span class="pill pill-think ml-1">think</span>
+        </td>
+        <td class="text-gray-600">DeepSeek</td>
+        <td class="text-right text-gray-600 tabular-nums">671B</td>
+        <td class="score-cell text-right score-top">81.1</td>
+        
+        <td class="score-cell text-right text-gray-700">92.0</td>
+        
+        <td class="score-cell text-right text-gray-700">82.0</td>
+        
+        <td class="score-cell text-right text-gray-700">81.7</td>
+        
+        <td class="score-cell text-right text-gray-700">76.4</td>
+        
+        <td class="score-cell text-right text-gray-700">77.1</td>
+        
+        <td class="score-cell text-right text-gray-700">93.9</td>
+        
+        <td class="score-cell text-right text-gray-700">50.8</td>
+        
+        <td class="score-cell text-right text-gray-700">93.1</td>
+        
+        <td class="score-cell text-right text-gray-700">70.6</td>
+        
+        <td class="score-cell text-right text-gray-700">93.8</td>
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">2</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/qwen3-235b-a22b-instruct.html" class="font-medium hover:underline" style="color: var(--ink);">Qwen3-235B-A22B</a>
+          
+        </td>
+        <td class="text-gray-600">Alibaba</td>
+        <td class="text-right text-gray-600 tabular-nums">235B</td>
+        <td class="score-cell text-right score-top">78.9</td>
+        
+        <td class="score-cell text-right text-gray-700">90.5</td>
+        
+        <td class="score-cell text-right text-gray-700">77.8</td>
+        
+        <td class="score-cell text-right text-gray-700">77.6</td>
+        
+        <td class="score-cell text-right text-gray-700">50.0</td>
+        
+        <td class="score-cell text-right text-gray-700">50.5</td>
+        
+        <td class="score-cell text-right text-gray-700">93.4</td>
+        
+        <td class="score-cell text-right text-gray-700">88.3</td>
+        
+        <td class="score-cell text-right text-gray-700">93.2</td>
+        
+        <td class="score-cell text-right text-gray-700">69.3</td>
+        
+        <td class="score-cell text-right text-gray-700">98.7</td>
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">3</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/930-pangu-718b-sft-0shot.html" class="font-medium hover:underline" style="color: var(--ink);">openPangu-Ultra-MoE-718B-V1.1</a>
+          
+        </td>
+        <td class="text-gray-600">openPangu</td>
+        <td class="text-right text-gray-600 tabular-nums">718B</td>
+        <td class="score-cell text-right score-top">76.3</td>
+        
+        <td class="score-cell text-right text-gray-700">92.1</td>
+        
+        <td class="score-cell text-right text-gray-700">83.9</td>
+        
+        <td class="score-cell text-right text-gray-700">74.7</td>
+        
+        <td class="score-cell text-right text-gray-700">41.8</td>
+        
+        <td class="score-cell text-right text-gray-700">33.8</td>
+        
+        <td class="score-cell text-right text-gray-700">88.8</td>
+        
+        <td class="score-cell text-right text-gray-700">88.4</td>
+        
+        <td class="score-cell text-right text-gray-700">93.8</td>
+        
+        <td class="score-cell text-right text-gray-700">69.3</td>
+        
+        <td class="score-cell text-right text-gray-700">96.5</td>
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">4</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/qwen3-14b-think.html" class="font-medium hover:underline" style="color: var(--ink);">Qwen3-14B (think)</a>
+          <span class="pill pill-think ml-1">think</span>
+        </td>
+        <td class="text-gray-600">Alibaba</td>
+        <td class="text-right text-gray-600 tabular-nums">14B</td>
+        <td class="score-cell text-right score-top">72.8</td>
+        
+        <td class="score-cell text-right text-gray-700">89.0</td>
+        
+        <td class="score-cell text-right text-gray-700">75.3</td>
+        
+        <td class="score-cell text-right text-gray-700">75.6</td>
+        
+        <td class="score-cell text-right text-gray-700">24.3</td>
+        
+        <td class="score-cell text-right text-gray-700">27.9</td>
+        
+        <td class="score-cell text-right text-gray-700">92.6</td>
+        
+        <td class="score-cell text-right text-gray-700">87.1</td>
+        
+        <td class="score-cell text-right text-gray-700">94.2</td>
+        
+        <td class="score-cell text-right text-gray-700">68.0</td>
+        
+        <td class="score-cell text-right text-gray-700">94.4</td>
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">5</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/deepseek-v3.1-mindie.html" class="font-medium hover:underline" style="color: var(--ink);">DeepSeek-V3.1</a>
+          
+        </td>
+        <td class="text-gray-600">DeepSeek</td>
+        <td class="text-right text-gray-600 tabular-nums">671B</td>
+        <td class="score-cell text-right score-top">72.6</td>
+        
+        <td class="score-cell text-right text-gray-700">91.5</td>
+        
+        <td class="score-cell text-right text-gray-700">81.2</td>
+        
+        <td class="score-cell text-right text-gray-700">76.2</td>
+        
+        <td class="score-cell text-right text-gray-700">27.2</td>
+        
+        <td class="score-cell text-right text-gray-700">35.8</td>
+        
+        <td class="score-cell text-right text-gray-700">89.2</td>
+        
+        <td class="score-cell text-right text-gray-700">69.7</td>
+        
+        <td class="score-cell text-right text-gray-700">92.1</td>
+        
+        <td class="score-cell text-right text-gray-700">67.1</td>
+        
+        <td class="score-cell text-right text-gray-700">96.0</td>
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">6</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/qwen3-8b-think.html" class="font-medium hover:underline" style="color: var(--ink);">Qwen3-8B (think)</a>
+          <span class="pill pill-think ml-1">think</span>
+        </td>
+        <td class="text-gray-600">Alibaba</td>
+        <td class="text-right text-gray-600 tabular-nums">8B</td>
+        <td class="score-cell text-right score-top">70.3</td>
+        
+        <td class="score-cell text-right text-gray-700">85.5</td>
+        
+        <td class="score-cell text-right text-gray-700">70.9</td>
+        
+        <td class="score-cell text-right text-gray-700">73.0</td>
+        
+        <td class="score-cell text-right text-gray-700">20.8</td>
+        
+        <td class="score-cell text-right text-gray-700">26.6</td>
+        
+        <td class="score-cell text-right text-gray-700">91.8</td>
+        
+        <td class="score-cell text-right text-gray-700">86.5</td>
+        
+        <td class="score-cell text-right text-gray-700">91.4</td>
+        
+        <td class="score-cell text-right text-gray-700">63.3</td>
+        
+        <td class="score-cell text-right text-gray-700">93.6</td>
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">7</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/meta-llama-3.1-405b-instruct.html" class="font-medium hover:underline" style="color: var(--ink);">Llama-3.1-405B</a>
+          
+        </td>
+        <td class="text-gray-600">Meta</td>
+        <td class="text-right text-gray-600 tabular-nums">405B</td>
+        <td class="score-cell text-right score-top">66.7</td>
+        
+        <td class="score-cell text-right text-gray-700">89.5</td>
+        
+        <td class="score-cell text-right text-gray-700">76.3</td>
+        
+        <td class="score-cell text-right text-gray-700">71.4</td>
+        
+        <td class="score-cell text-right text-gray-700">5.5</td>
+        
+        <td class="score-cell text-right text-gray-700">14.9</td>
+        
+        <td class="score-cell text-right text-gray-700">92.3</td>
+        
+        <td class="score-cell text-right text-gray-700">84.6</td>
+        
+        <td class="score-cell text-right text-gray-700">87.5</td>
+        
+        <td class="score-cell text-right text-gray-700">65.8</td>
+        
+        <td class="score-cell text-right text-gray-700">79.6</td>
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">8</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/qwen3-8b-no-think.html" class="font-medium hover:underline" style="color: var(--ink);">Qwen3-8B (no-think)</a>
+          
+        </td>
+        <td class="text-gray-600">Alibaba</td>
+        <td class="text-right text-gray-600 tabular-nums">8B</td>
+        <td class="score-cell text-right score-top">64.0</td>
+        
+        <td class="score-cell text-right text-gray-700">79.6</td>
+        
+        <td class="score-cell text-right text-gray-700">61.5</td>
+        
+        <td class="score-cell text-right text-gray-700">64.1</td>
+        
+        <td class="score-cell text-right text-gray-700">9.9</td>
+        
+        <td class="score-cell text-right text-gray-700">16.9</td>
+        
+        <td class="score-cell text-right text-gray-700">84.8</td>
+        
+        <td class="score-cell text-right text-gray-700">86.5</td>
+        
+        <td class="score-cell text-right text-gray-700">87.8</td>
+        
+        <td class="score-cell text-right text-gray-700">57.5</td>
+        
+        <td class="score-cell text-right text-gray-700">91.6</td>
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">9</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/gemma-3-12b-it-no-think.html" class="font-medium hover:underline" style="color: var(--ink);">Gemma-3-12B-IT</a>
+          
+        </td>
+        <td class="text-gray-600">Google</td>
+        <td class="text-right text-gray-600 tabular-nums">12B</td>
+        <td class="score-cell text-right score-top">61.9</td>
+        
+        <td class="score-cell text-right text-gray-700">79.8</td>
+        
+        <td class="score-cell text-right text-gray-700">63.2</td>
+        
+        <td class="score-cell text-right text-gray-700">64.9</td>
+        
+        <td class="score-cell text-right text-gray-700">13.4</td>
+        
+        <td class="score-cell text-right text-gray-700">13.9</td>
+        
+        <td class="score-cell text-right text-gray-700">88.8</td>
+        
+        <td class="score-cell text-right text-gray-700">59.2</td>
+        
+        <td class="score-cell text-right text-gray-700">85.8</td>
+        
+        <td class="score-cell text-right text-gray-700">60.4</td>
+        
+        <td class="score-cell text-right text-gray-700">90.0</td>
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">10</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/deepseek-r1-distill-qwen-14b-think.html" class="font-medium hover:underline" style="color: var(--ink);">DS-R1-Distill-Qwen-14B</a>
+          <span class="pill pill-think ml-1">think</span>
+        </td>
+        <td class="text-gray-600">DeepSeek</td>
+        <td class="text-right text-gray-600 tabular-nums">14B</td>
+        <td class="score-cell text-right score-top">61.4</td>
+        
+        <td class="score-cell text-right text-gray-700">73.8</td>
+        
+        <td class="score-cell text-right text-gray-700">70.6</td>
+        
+        <td class="score-cell text-right text-gray-700">70.3</td>
+        
+        <td class="score-cell text-right text-gray-700">4.9</td>
+        
+        <td class="score-cell text-right text-gray-700">12.1</td>
+        
+        <td class="score-cell text-right text-gray-700">90.4</td>
+        
+        <td class="score-cell text-right text-gray-700">58.1</td>
+        
+        <td class="score-cell text-right text-gray-700">88.8</td>
+        
+        <td class="score-cell text-right text-gray-700">65.5</td>
+        
+        <td class="score-cell text-right text-gray-700">79.7</td>
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">11</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/llama-3.1-8b-no-think.html" class="font-medium hover:underline" style="color: var(--ink);">Llama-3.1-8B</a>
+          
+        </td>
+        <td class="text-gray-600">Meta</td>
+        <td class="text-right text-gray-600 tabular-nums">8B</td>
+        <td class="score-cell text-right score-top">55.5</td>
+        
+        <td class="score-cell text-right text-gray-700">68.2</td>
+        
+        <td class="score-cell text-right text-gray-700">49.7</td>
+        
+        <td class="score-cell text-right text-gray-700">52.4</td>
+        
+        <td class="score-cell text-right text-gray-700">3.5</td>
+        
+        <td class="score-cell text-right text-gray-700">10.4</td>
+        
+        <td class="score-cell text-right text-gray-700">75.8</td>
+        
+        <td class="score-cell text-right text-gray-700">83.5</td>
+        
+        <td class="score-cell text-right text-gray-700">80.8</td>
+        
+        <td class="score-cell text-right text-gray-700">55.5</td>
+        
+        <td class="score-cell text-right text-gray-700">75.3</td>
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">12</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/minstral-8b-instruct-no-think.html" class="font-medium hover:underline" style="color: var(--ink);">Mistral-8B-Instruct</a>
+          
+        </td>
+        <td class="text-gray-600">Mistral</td>
+        <td class="text-right text-gray-600 tabular-nums">8B</td>
+        <td class="score-cell text-right score-top">53.3</td>
+        
+        <td class="score-cell text-right text-gray-700">62.0</td>
+        
+        <td class="score-cell text-right text-gray-700">46.4</td>
+        
+        <td class="score-cell text-right text-gray-700">51.2</td>
+        
+        <td class="score-cell text-right text-gray-700">3.5</td>
+        
+        <td class="score-cell text-right text-gray-700">9.0</td>
+        
+        <td class="score-cell text-right text-gray-700">79.2</td>
+        
+        <td class="score-cell text-right text-gray-700">75.5</td>
+        
+        <td class="score-cell text-right text-gray-700">80.6</td>
+        
+        <td class="score-cell text-right text-gray-700">49.2</td>
+        
+        <td class="score-cell text-right text-gray-700">76.3</td>
+        
+      </tr>
+      
+    </tbody>
+  </table>
+</div>
+
+
+
+
+
+<div class="mb-4 flex items-baseline justify-between">
+  <h2 class="font-bold" style="font-size: 17px; color: var(--ink);">
+    <span class="inline-block w-1 h-4 mr-2 align-middle" style="background: #64748B;"></span>
+    🔒 闭源 / API 榜
+  </h2>
+  <span class="text-xs text-gray-500">10 个 API</span>
+</div>
+<div class="card overflow-x-auto mb-8">
+  <table class="lb">
+    <thead>
+      <tr>
+        <th class="text-left" style="width: 38px;">#</th>
+        <th class="text-left">模型</th>
+        <th class="text-left">厂商</th>
+        <th class="text-right" style="width: 64px;">参数</th>
+        <th class="text-right" style="width: 78px;">总分</th>
+        
+        <th class="text-right" style="font-size: 10px;">Math</th>
+        
+        <th class="text-right" style="font-size: 10px;">Reasoning</th>
+        
+        <th class="text-right" style="font-size: 10px;">Knowledge</th>
+        
+        <th class="text-right" style="font-size: 10px;">Instruct</th>
+        
+        <th class="text-right" style="font-size: 10px;">Dialogue</th>
+        
+        <th class="text-right" style="font-size: 10px;">Reading</th>
+        
+        <th class="text-right" style="font-size: 10px;">Translation</th>
+        
+        <th class="text-right" style="font-size: 10px;">Cross SA</th>
+        
+        <th class="text-right" style="font-size: 10px;">Cross SB</th>
+        
+        <th class="text-right" style="font-size: 10px;">Mono CS</th>
+        
+      </tr>
+    </thead>
+    <tbody>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">1</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/gemini-2.5-pro.html" class="font-medium hover:underline" style="color: var(--ink);">Gemini 2.5 Pro</a>
+          
+        </td>
+        <td class="text-gray-600">Google</td>
+        <td class="text-right text-gray-600 tabular-nums">—</td>
+        <td class="score-cell text-right score-top">85.4</td>
+        
+        <td class="score-cell text-right text-gray-700">92.1</td>
+        
+        <td class="score-cell text-right text-gray-700">88.8</td>
+        
+        <td class="score-cell text-right text-gray-700">86.7</td>
+        
+        <td class="score-cell text-right text-gray-700">74.2</td>
+        
+        <td class="score-cell text-right text-gray-700">62.2</td>
+        
+        <td class="score-cell text-right text-gray-700">95.3</td>
+        
+        <td class="score-cell text-right text-gray-700">88.3</td>
+        
+        <td class="score-cell text-right text-gray-700">95.9</td>
+        
+        <td class="score-cell text-right text-gray-700">74.9</td>
+        
+        <td class="score-cell text-right text-gray-700">95.2</td>
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">2</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/doubao-seed-1-6-thinking-250715.html" class="font-medium hover:underline" style="color: var(--ink);">Doubao-Seed-1.6 (think)</a>
+          <span class="pill pill-think ml-1">think</span>
+        </td>
+        <td class="text-gray-600">ByteDance</td>
+        <td class="text-right text-gray-600 tabular-nums">—</td>
+        <td class="score-cell text-right score-top">84.9</td>
+        
+        <td class="score-cell text-right text-gray-700">92.6</td>
+        
+        <td class="score-cell text-right text-gray-700">82.6</td>
+        
+        <td class="score-cell text-right text-gray-700">80.5</td>
+        
+        <td class="score-cell text-right text-gray-700">76.6</td>
+        
+        <td class="score-cell text-right text-gray-700">77.8</td>
+        
+        <td class="score-cell text-right text-gray-700">94.2</td>
+        
+        <td class="score-cell text-right text-gray-700">84.6</td>
+        
+        <td class="score-cell text-right text-gray-700">94.1</td>
+        
+        <td class="score-cell text-right text-gray-700">70.4</td>
+        
+        <td class="score-cell text-right text-gray-700">95.9</td>
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">3</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/doubao-seed-1-6-250615.html" class="font-medium hover:underline" style="color: var(--ink);">Doubao-Seed-1.6</a>
+          
+        </td>
+        <td class="text-gray-600">ByteDance</td>
+        <td class="text-right text-gray-600 tabular-nums">—</td>
+        <td class="score-cell text-right score-top">81.9</td>
+        
+        <td class="score-cell text-right text-gray-700">92.7</td>
+        
+        <td class="score-cell text-right text-gray-700">83.1</td>
+        
+        <td class="score-cell text-right text-gray-700">80.5</td>
+        
+        <td class="score-cell text-right text-gray-700">62.9</td>
+        
+        <td class="score-cell text-right text-gray-700">62.3</td>
+        
+        <td class="score-cell text-right text-gray-700">94.2</td>
+        
+        <td class="score-cell text-right text-gray-700">86.2</td>
+        
+        <td class="score-cell text-right text-gray-700">91.1</td>
+        
+        <td class="score-cell text-right text-gray-700">70.5</td>
+        
+        <td class="score-cell text-right text-gray-700">95.7</td>
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">4</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/o3.html" class="font-medium hover:underline" style="color: var(--ink);">o3</a>
+          <span class="pill pill-think ml-1">think</span>
+        </td>
+        <td class="text-gray-600">OpenAI</td>
+        <td class="text-right text-gray-600 tabular-nums">—</td>
+        <td class="score-cell text-right score-top">78.6</td>
+        
+        <td class="score-cell text-right text-gray-700">92.1</td>
+        
+        <td class="score-cell text-right text-gray-700">89.2</td>
+        
+        <td class="score-cell text-right text-gray-700">85.4</td>
+        
+        <td class="score-cell text-right text-gray-700">29.6</td>
+        
+        <td class="score-cell text-right text-gray-700">55.6</td>
+        
+        <td class="score-cell text-right text-gray-700">94.9</td>
+        
+        <td class="score-cell text-right text-gray-700">88.0</td>
+        
+        <td class="score-cell text-right text-gray-700">91.2</td>
+        
+        <td class="score-cell text-right text-gray-700">75.8</td>
+        
+        <td class="score-cell text-right text-gray-700">84.4</td>
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">5</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/claude-sonnet-4-5-20250929.html" class="font-medium hover:underline" style="color: var(--ink);">Claude Sonnet 4.5</a>
+          
+        </td>
+        <td class="text-gray-600">Anthropic</td>
+        <td class="text-right text-gray-600 tabular-nums">—</td>
+        <td class="score-cell text-right score-top">78.3</td>
+        
+        <td class="score-cell text-right text-gray-700">93.6</td>
+        
+        <td class="score-cell text-right text-gray-700">86.7</td>
+        
+        <td class="score-cell text-right text-gray-700">83.5</td>
+        
+        <td class="score-cell text-right text-gray-700">27.6</td>
+        
+        <td class="score-cell text-right text-gray-700">51.0</td>
+        
+        <td class="score-cell text-right text-gray-700">94.6</td>
+        
+        <td class="score-cell text-right text-gray-700">87.8</td>
+        
+        <td class="score-cell text-right text-gray-700">89.1</td>
+        
+        <td class="score-cell text-right text-gray-700">73.7</td>
+        
+        <td class="score-cell text-right text-gray-700">95.1</td>
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">6</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/grok-3.html" class="font-medium hover:underline" style="color: var(--ink);">Grok 3</a>
+          
+        </td>
+        <td class="text-gray-600">xAI</td>
+        <td class="text-right text-gray-600 tabular-nums">—</td>
+        <td class="score-cell text-right score-top">74.7</td>
+        
+        <td class="score-cell text-right text-gray-700">91.7</td>
+        
+        <td class="score-cell text-right text-gray-700">81.2</td>
+        
+        <td class="score-cell text-right text-gray-700">78.2</td>
+        
+        <td class="score-cell text-right text-gray-700">15.2</td>
+        
+        <td class="score-cell text-right text-gray-700">35.6</td>
+        
+        <td class="score-cell text-right text-gray-700">93.2</td>
+        
+        <td class="score-cell text-right text-gray-700">87.7</td>
+        
+        <td class="score-cell text-right text-gray-700">94.3</td>
+        
+        <td class="score-cell text-right text-gray-700">74.5</td>
+        
+        <td class="score-cell text-right text-gray-700">95.7</td>
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">7</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/o4-mini.html" class="font-medium hover:underline" style="color: var(--ink);">o4-mini</a>
+          <span class="pill pill-think ml-1">think</span>
+        </td>
+        <td class="text-gray-600">OpenAI</td>
+        <td class="text-right text-gray-600 tabular-nums">—</td>
+        <td class="score-cell text-right score-top">74.5</td>
+        
+        <td class="score-cell text-right text-gray-700">93.5</td>
+        
+        <td class="score-cell text-right text-gray-700">84.2</td>
+        
+        <td class="score-cell text-right text-gray-700">81.9</td>
+        
+        <td class="score-cell text-right text-gray-700">17.0</td>
+        
+        <td class="score-cell text-right text-gray-700">36.8</td>
+        
+        <td class="score-cell text-right text-gray-700">94.1</td>
+        
+        <td class="score-cell text-right text-gray-700">87.7</td>
+        
+        <td class="score-cell text-right text-gray-700">89.0</td>
+        
+        <td class="score-cell text-right text-gray-700">71.8</td>
+        
+        <td class="score-cell text-right text-gray-700">89.0</td>
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">8</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/gpt-5-chat-latest.html" class="font-medium hover:underline" style="color: var(--ink);">GPT-5 Chat</a>
+          
+        </td>
+        <td class="text-gray-600">OpenAI</td>
+        <td class="text-right text-gray-600 tabular-nums">—</td>
+        <td class="score-cell text-right score-top">74.1</td>
+        
+        <td class="score-cell text-right text-gray-700">92.4</td>
+        
+        <td class="score-cell text-right text-gray-700">83.6</td>
+        
+        <td class="score-cell text-right text-gray-700">79.3</td>
+        
+        <td class="score-cell text-right text-gray-700">9.7</td>
+        
+        <td class="score-cell text-right text-gray-700">35.3</td>
+        
+        <td class="score-cell text-right text-gray-700">93.5</td>
+        
+        <td class="score-cell text-right text-gray-700">86.0</td>
+        
+        <td class="score-cell text-right text-gray-700">95.3</td>
+        
+        <td class="score-cell text-right text-gray-700">73.0</td>
+        
+        <td class="score-cell text-right text-gray-700">93.3</td>
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">9</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/qwen-max.html" class="font-medium hover:underline" style="color: var(--ink);">Qwen-Max</a>
+          
+        </td>
+        <td class="text-gray-600">Alibaba</td>
+        <td class="text-right text-gray-600 tabular-nums">—</td>
+        <td class="score-cell text-right score-top">71.3</td>
+        
+        <td class="score-cell text-right text-gray-700">88.0</td>
+        
+        <td class="score-cell text-right text-gray-700">72.2</td>
+        
+        <td class="score-cell text-right text-gray-700">73.5</td>
+        
+        <td class="score-cell text-right text-gray-700">4.1</td>
+        
+        <td class="score-cell text-right text-gray-700">50.0</td>
+        
+        <td class="score-cell text-right text-gray-700">90.9</td>
+        
+        <td class="score-cell text-right text-gray-700">85.4</td>
+        
+        <td class="score-cell text-right text-gray-700">87.7</td>
+        
+        <td class="score-cell text-right text-gray-700">68.7</td>
+        
+        <td class="score-cell text-right text-gray-700">92.4</td>
+        
+      </tr>
+      
+      <tr>
+        <td class="text-gray-400 tabular-nums">10</td>
+        <td>
+          <a href="/gaoyao-leaderboard/zh/model/gpt-4o.html" class="font-medium hover:underline" style="color: var(--ink);">GPT-4o</a>
+          
+        </td>
+        <td class="text-gray-600">OpenAI</td>
+        <td class="text-right text-gray-600 tabular-nums">—</td>
+        <td class="score-cell text-right score-top">70.2</td>
+        
+        <td class="score-cell text-right text-gray-700">90.2</td>
+        
+        <td class="score-cell text-right text-gray-700">79.5</td>
+        
+        <td class="score-cell text-right text-gray-700">79.2</td>
+        
+        <td class="score-cell text-right text-gray-700">7.3</td>
+        
+        <td class="score-cell text-right text-gray-700">19.9</td>
+        
+        <td class="score-cell text-right text-gray-700">92.4</td>
+        
+        <td class="score-cell text-right text-gray-700">87.5</td>
+        
+        <td class="score-cell text-right text-gray-700">90.2</td>
+        
+        <td class="score-cell text-right text-gray-700">72.6</td>
+        
+        <td class="score-cell text-right text-gray-700">83.2</td>
+        
+      </tr>
+      
+    </tbody>
+  </table>
+</div>
+
+
+
+
+<p class="mt-4 text-xs text-gray-500 max-w-4xl leading-relaxed">
+  得分均为 0–100。主观列（指令遵循 / 对话）走 LLM-as-judge 胜率。 <a class="underline hover:text-gray-800" href="/gaoyao-leaderboard/zh/about.html">关于</a>
+</p>
+
+    </main>
+  </div>
+
+  <footer>
+    <div class="mx-auto px-10 flex justify-between items-center flex-wrap gap-3" style="max-width: 1680px;">
+      <span>皋陶 GaoYao · 得分 0–100 · 基于原始评测结果实时聚合</span>
+      <span class="flex items-center gap-3 text-gray-400">
+        <span class="text-[11px]">由</span>
+        <img src="/gaoyao-leaderboard/static/logo/prism-mark.svg?v=2" alt="PRISM" style="width: 22px; height: 22px;">
+        <span class="font-semibold tracking-widest" style="color: var(--ink-2);">PRISM</span>
+      </span>
+    </div>
+  </footer>
+</body>
+</html>

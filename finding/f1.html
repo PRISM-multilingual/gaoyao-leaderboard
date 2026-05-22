@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Specialization · GaoYao</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="/gaoyao-leaderboard/static/logo/favicon.png?v=2">
+  <style>
+    :root {
+      --hw-red:    #B91C1C;   /* deeper, less saturated than HW red */
+      --hw-red-2:  #7F1D1D;
+      --ink:       #18181B;
+      --ink-2:     #3F3F46;
+      --muted:     #71717A;
+      --line:      #E4E4E7;
+      --line-2:    #F4F4F5;
+      --bg:        #FAFAF9;
+      --paper:     #FFFFFF;
+    }
+    html { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+    [x-cloak] { display: none !important; }
+    body { background: var(--bg); color: var(--ink); font-size: 14px; line-height: 1.5; }
+    .font-serif-zh { font-family: 'Noto Serif SC', 'Songti SC', serif; letter-spacing: 0.02em; }
+    .font-mono    { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+    /* "GaoYao" wordmark */
+    .wordmark { font-family: 'Noto Serif SC', serif; font-weight: 700; letter-spacing: 0.04em; }
+
+    /* topbar */
+    .topbar { background: var(--paper); border-bottom: 1px solid var(--line); }
+    .topbar-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 32px; }
+    .nav-pill { padding: 6px 14px; font-size: 13px; color: var(--ink-2); border-radius: 999px; transition: all 0.15s; }
+    .nav-pill:hover { background: var(--line-2); color: var(--ink); }
+    .nav-pill.active { background: var(--ink); color: white; }
+    .btn-primary { background: var(--hw-red); color: white; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; transition: all 0.15s; }
+    .btn-primary:hover { background: var(--hw-red-2); }
+
+    /* side rail */
+    .rail { position: sticky; top: 24px; align-self: start; }
+    .rail-section { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 20px; margin-bottom: 8px; padding: 0 12px; }
+    .rail-link { display: block; padding: 9px 14px; border-radius: 6px; font-size: 14.5px; color: var(--ink-2); transition: all 0.12s; }
+    .rail-link:hover { background: var(--line-2); color: var(--ink); }
+    .rail-link.active { background: rgba(185,28,28,0.08); color: var(--hw-red); font-weight: 600; box-shadow: inset 2px 0 0 var(--hw-red); }
+
+    /* cards */
+    .card { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; }
+    .card-tight { padding: 16px 20px; }
+    .card-pad   { padding: 24px 28px; }
+
+    /* heading rhythm */
+    h1.page { font-family: 'Noto Serif SC', serif; font-size: 28px; font-weight: 700; letter-spacing: -0.005em; color: var(--ink); margin: 0; }
+    .page-lede { font-size: 14px; color: var(--muted); margin-top: 6px; line-height: 1.55; max-width: 80ch; }
+
+    /* tables */
+    table.lb { border-collapse: separate; border-spacing: 0; width: 100%; }
+    table.lb th, table.lb td { padding: 9px 14px; font-size: 13px; vertical-align: middle; }
+    table.lb thead th { font-weight: 600; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); background: var(--line-2); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 1; }
+    table.lb tbody tr:hover { background: rgba(185,28,28,0.025); }
+    table.lb tbody tr + tr td { border-top: 1px solid var(--line-2); }
+    .score-cell { font-variant-numeric: tabular-nums; }
+    .score-top { font-weight: 700; color: var(--hw-red); }
+
+    /* pills */
+    .pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 11px; font-weight: 500; border-radius: 999px; line-height: 1.4; }
+    .pill-open    { background: #ECFDF5; color: #047857; }
+    .pill-closed  { background: #F4F4F5; color: #52525B; }
+    .pill-judge   { background: #FEF3C7; color: #92400E; }
+    .pill-think   { background: #FAF5FF; color: #6B21A8; }
+    .pill-tier-H  { background: #ECFDF5; color: #047857; }
+    .pill-tier-M  { background: #FEFCE8; color: #854D0E; }
+    .pill-tier-L  { background: #FEE2E2; color: #991B1B; }
+
+    /* score bar */
+    .bar-track { background: var(--line-2); border-radius: 3px; height: 8px; overflow: hidden; }
+    .bar-fill  { background: var(--hw-red); height: 100%; border-radius: 3px; }
+
+    /* footer */
+    footer { background: var(--paper); border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0; font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <!-- data-cutoff banner -->
+  <div style="background: linear-gradient(90deg, #FEF2F2 0%, #FFFFFF 60%); border-bottom: 1px solid #FCE7E7;">
+    <div class="mx-auto px-6 lg:px-10 py-1.5 flex items-center gap-2 text-xs" style="max-width: 1680px; color: #7F1D1D;">
+      <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: var(--hw-red);"></span>
+      <span><b>Data cutoff</b> · November 2025</span>
+      <span class="text-gray-400 ml-1">— newly submitted models appear after admin review</span>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="topbar-inner max-w-none">
+      <a href="/gaoyao-leaderboard/" class="flex items-center gap-3">
+        <span class="inline-block w-1 h-9" style="background: var(--hw-red);"></span>
+        <span>
+          <div class="wordmark text-xl text-black">皋陶 · GaoYao</div>
+          <div class="text-[11px] text-gray-500 -mt-1">Multilingual & Multicultural LLM Leaderboard · ACL 2026</div>
+        </span>
+      </a>
+      <nav class="flex items-center gap-2">
+        <a href="https://arxiv.org/abs/2604.20225" class="nav-pill">Paper</a>
+        <a href="https://github.com/lunyiliu/GaoYao" class="nav-pill">GitHub</a>
+        <a href="/gaoyao-leaderboard/about.html" class="nav-pill ">About</a>
+        <!-- language toggle -->
+        <a href="/gaoyao-leaderboard/zh/finding/f1.html" class="nav-pill" title="Switch language">中文</a>
+        
+      </nav>
+    </div>
+  </header>
+
+  <div class="mx-auto px-6 lg:px-10 py-8 grid grid-cols-1 md:grid-cols-12 gap-8" style="max-width: 1680px;">
+    <aside class="md:col-span-3 lg:col-span-2 rail">
+      <div class="rail-section">Views</div>
+      
+      <a href="/gaoyao-leaderboard/" class="rail-link ">Overall</a>
+      <a href="/gaoyao-leaderboard/by-language.html" class="rail-link ">By Language</a>
+      <a href="/gaoyao-leaderboard/cultural-layer.html" class="rail-link ">3-Layer Framework</a>
+
+      <div class="rail-section">Insights</div>
+      <a href="/gaoyao-leaderboard/finding/f1.html" class="rail-link active">Specialization</a>
+      <a href="/gaoyao-leaderboard/finding/f2.html" class="rail-link ">Language Divide</a>
+      <a href="/gaoyao-leaderboard/finding/f3.html" class="rail-link ">Saturation</a>
+      <a href="/gaoyao-leaderboard/finding/f4.html" class="rail-link ">Thinking Gain</a>
+
+      <div class="rail-section">More</div>
+      <a href="/gaoyao-leaderboard/about.html" class="rail-link ">About</a>
+
+      <div class="mt-8 px-2 text-[11px] text-gray-500 leading-relaxed">
+        <p><b class="text-gray-700">26 languages · 51 nations</b></p>
+        <p class="mt-1">10 sub-layers · 3 cultural layers</p>
+        <p class="mt-2">Auto-eval covers the 5 truly objective sub-tasks; subjective and culturally-grounded sets require a judge LLM and are run by the maintainers. New submissions appear after admin review.</p>
+      </div>
+    </aside>
+
+    <main class="md:col-span-9 lg:col-span-10 min-w-0">
+      
+<div class="mb-6">
+  <h1 class="page">Specialization · No &#39;one model fits all&#39;</h1>
+  <p class="page-lede">Flagship models don&#39;t dominate uniformly. They cluster into three archetypes — each excelling at a different layer of the cognitive stack.</p>
+</div>
+
+<!-- 3 archetype cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-7">
+  
+  <div class="card card-pad" style="border-top: 3px solid #1D4ED8;">
+    <div class="text-xs uppercase tracking-wider font-semibold" style="color: #1D4ED8;">Logic &amp; Culture Specialist</div>
+    <a href="/gaoyao-leaderboard/model/930-pangu-718b-sft-0shot.html" class="block mt-1 text-lg font-bold hover:underline" style="color: var(--ink);">openPangu-Ultra-MoE-718B-V1.1</a>
+    <p class="text-xs text-gray-600 mt-2 leading-relaxed">Among open-source models, takes #1 on both Math and Reasoning while staying in the top tier on Cross-Culture (SAGE #2, SuperBLEnD #2) — rigorous logical training appears to transfer to complex cultural framing.</p>
+    <div class="mt-3 space-y-1">
+      
+      <div class="flex items-center gap-2 text-xs">
+        <div class="w-28 text-gray-600 truncate">Math</div>
+        <div class="flex-1 bar-track">
+          <div class="bar-fill" style="width: 92.11%; background: #1D4ED8;"></div>
+        </div>
+        <div class="w-9 text-right tabular-nums font-medium">92.1</div>
+      </div>
+      
+      <div class="flex items-center gap-2 text-xs">
+        <div class="w-28 text-gray-600 truncate">Reasoning</div>
+        <div class="flex-1 bar-track">
+          <div class="bar-fill" style="width: 83.92%; background: #1D4ED8;"></div>
+        </div>
+        <div class="w-9 text-right tabular-nums font-medium">83.9</div>
+      </div>
+      
+      <div class="flex items-center gap-2 text-xs">
+        <div class="w-28 text-gray-600 truncate">Cross-Culture (SA)</div>
+        <div class="flex-1 bar-track">
+          <div class="bar-fill" style="width: 93.84%; background: #1D4ED8;"></div>
+        </div>
+        <div class="w-9 text-right tabular-nums font-medium">93.8</div>
+      </div>
+      
+      <div class="flex items-center gap-2 text-xs">
+        <div class="w-28 text-gray-600 truncate">Cross-Culture (SB)</div>
+        <div class="flex-1 bar-track">
+          <div class="bar-fill" style="width: 69.34%; background: #1D4ED8;"></div>
+        </div>
+        <div class="w-9 text-right tabular-nums font-medium">69.3</div>
+      </div>
+      
+    </div>
+  </div>
+  
+  <div class="card card-pad" style="border-top: 3px solid #15803D;">
+    <div class="text-xs uppercase tracking-wider font-semibold" style="color: #15803D;">Knowledge Heavyweight</div>
+    <a href="/gaoyao-leaderboard/model/gemini-2.5-pro.html" class="block mt-1 text-lg font-bold hover:underline" style="color: var(--ink);">Gemini-2.5-Pro</a>
+    <p class="text-xs text-gray-600 mt-2 leading-relaxed">Dominates Knowledge, Reading and Translation. A pre-training corpus with exceptional informational breadth.</p>
+    <div class="mt-3 space-y-1">
+      
+      <div class="flex items-center gap-2 text-xs">
+        <div class="w-28 text-gray-600 truncate">Knowledge</div>
+        <div class="flex-1 bar-track">
+          <div class="bar-fill" style="width: 86.73%; background: #15803D;"></div>
+        </div>
+        <div class="w-9 text-right tabular-nums font-medium">86.7</div>
+      </div>
+      
+      <div class="flex items-center gap-2 text-xs">
+        <div class="w-28 text-gray-600 truncate">Reading</div>
+        <div class="flex-1 bar-track">
+          <div class="bar-fill" style="width: 95.35%; background: #15803D;"></div>
+        </div>
+        <div class="w-9 text-right tabular-nums font-medium">95.3</div>
+      </div>
+      
+      <div class="flex items-center gap-2 text-xs">
+        <div class="w-28 text-gray-600 truncate">Translation</div>
+        <div class="flex-1 bar-track">
+          <div class="bar-fill" style="width: 88.27%; background: #15803D;"></div>
+        </div>
+        <div class="w-9 text-right tabular-nums font-medium">88.3</div>
+      </div>
+      
+      <div class="flex items-center gap-2 text-xs">
+        <div class="w-28 text-gray-600 truncate">Reasoning</div>
+        <div class="flex-1 bar-track">
+          <div class="bar-fill" style="width: 88.77%; background: #15803D;"></div>
+        </div>
+        <div class="w-9 text-right tabular-nums font-medium">88.8</div>
+      </div>
+      
+    </div>
+  </div>
+  
+  <div class="card card-pad" style="border-top: 3px solid #B91C1C;">
+    <div class="text-xs uppercase tracking-wider font-semibold" style="color: #B91C1C;">Interaction Specialist</div>
+    <a href="/gaoyao-leaderboard/model/deepseek-r1.html" class="block mt-1 text-lg font-bold hover:underline" style="color: var(--ink);">DeepSeek-R1</a>
+    <p class="text-xs text-gray-600 mt-2 leading-relaxed">Leads both open-source and closed-source on Instruction Following and Dialogue — a post-training strategy tuned for conversational utility and complex user constraints.</p>
+    <div class="mt-3 space-y-1">
+      
+      <div class="flex items-center gap-2 text-xs">
+        <div class="w-28 text-gray-600 truncate">Instruction Following</div>
+        <div class="flex-1 bar-track">
+          <div class="bar-fill" style="width: 76.44%; background: #B91C1C;"></div>
+        </div>
+        <div class="w-9 text-right tabular-nums font-medium">76.4</div>
+      </div>
+      
+      <div class="flex items-center gap-2 text-xs">
+        <div class="w-28 text-gray-600 truncate">Dialogue</div>
+        <div class="flex-1 bar-track">
+          <div class="bar-fill" style="width: 77.14%; background: #B91C1C;"></div>
+        </div>
+        <div class="w-9 text-right tabular-nums font-medium">77.1</div>
+      </div>
+      
+      <div class="flex items-center gap-2 text-xs">
+        <div class="w-28 text-gray-600 truncate">Reading</div>
+        <div class="flex-1 bar-track">
+          <div class="bar-fill" style="width: 93.88%; background: #B91C1C;"></div>
+        </div>
+        <div class="w-9 text-right tabular-nums font-medium">93.9</div>
+      </div>
+      
+      <div class="flex items-center gap-2 text-xs">
+        <div class="w-28 text-gray-600 truncate">Reasoning</div>
+        <div class="flex-1 bar-track">
+          <div class="bar-fill" style="width: 81.97%; background: #B91C1C;"></div>
+        </div>
+        <div class="w-9 text-right tabular-nums font-medium">82.0</div>
+      </div>
+      
+    </div>
+  </div>
+  
+</div>
+
+<div class="card card-pad">
+  <h2 class="font-semibold mb-3">Side-by-side radar — pick any subset</h2>
+  <div id="radar" style="height: 540px;"></div>
+</div>
+
+<script>
+  const data = {"models": [{"key": "930-Pangu-718B-sft 0shot", "display": "openPangu-Ultra-MoE-718B-V1.1"}, {"key": "gemini-2.5-pro", "display": "Gemini 2.5 Pro"}, {"key": "deepseek-r1", "display": "DeepSeek-R1"}, {"key": "Qwen3-235B-A22B-Instruct", "display": "Qwen3-235B-A22B"}, {"key": "claude-sonnet-4-5-20250929", "display": "Claude Sonnet 4.5"}, {"key": "doubao-seed-1-6-250615", "display": "Doubao-Seed-1.6"}], "sub_layers": ["Math", "Reasoning", "Knowledge", "Instruction Following", "Dialogue", "Reading", "Translation", "Cross-Culture (SA)", "Cross-Culture (SB)", "Mono-Culture (CS)"], "rows": [[92.11, 83.92, 74.71, 41.77, 33.83, 88.79, 88.36, 93.84, 69.34, 96.51], [92.07, 88.77, 86.73, 74.21, 62.23, 95.35, 88.27, 95.94, 74.87, 95.2], [92.0, 81.97, 81.7, 76.44, 77.14, 93.88, 50.76, 93.09, 70.58, 93.76], [90.47, 77.76, 77.61, 50.01, 50.49, 93.44, 88.32, 93.22, 69.31, 98.66], [93.64, 86.66, 83.5, 27.56, 50.99, 94.61, 87.82, 89.08, 73.72, 95.11], [92.69, 83.11, 80.51, 62.92, 62.34, 94.24, 86.19, 91.11, 70.52, 95.69]]};
+  const chart = echarts.init(document.getElementById('radar'));
+  chart.setOption({
+    tooltip: { trigger: 'item' },
+    legend: { type: 'scroll', orient: 'horizontal', top: 0,
+      data: data.models.map(m => m.display), textStyle: { fontSize: 11 } },
+    radar: {
+      indicator: data.sub_layers.map(s => ({ name: s, max: 100 })),
+      shape: 'polygon', splitNumber: 5, radius: '70%',
+      axisName: { color: '#444', fontSize: 11 },
+      splitLine: { lineStyle: { color: '#e5e5e5' } },
+      splitArea: { areaStyle: { color: ['#fff', '#fafafa'] } },
+    },
+    series: [{
+      type: 'radar',
+      data: data.models.map((m, i) => ({ name: m.display, value: data.rows[i] })),
+      lineStyle: { width: 1.5 },
+      areaStyle: { opacity: 0.04 },
+    }],
+  });
+  window.addEventListener('resize', () => chart.resize());
+</script>
+
+    </main>
+  </div>
+
+  <footer>
+    <div class="mx-auto px-10 flex justify-between items-center flex-wrap gap-3" style="max-width: 1680px;">
+      <span>皋陶 GaoYao · Scores on a 0–100 scale · live-computed from raw eval results</span>
+      <span class="flex items-center gap-3 text-gray-400">
+        <span class="text-[11px]">built by</span>
+        <img src="/gaoyao-leaderboard/static/logo/prism-mark.svg?v=2" alt="PRISM" style="width: 22px; height: 22px;">
+        <span class="font-semibold tracking-widest" style="color: var(--ink-2);">PRISM</span>
+      </span>
+    </div>
+  </footer>
+</body>
+</html>

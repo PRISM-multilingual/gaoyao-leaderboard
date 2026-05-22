@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GPT-4o · GaoYao</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="/gaoyao-leaderboard/static/logo/favicon.png?v=2">
+  <style>
+    :root {
+      --hw-red:    #B91C1C;   /* deeper, less saturated than HW red */
+      --hw-red-2:  #7F1D1D;
+      --ink:       #18181B;
+      --ink-2:     #3F3F46;
+      --muted:     #71717A;
+      --line:      #E4E4E7;
+      --line-2:    #F4F4F5;
+      --bg:        #FAFAF9;
+      --paper:     #FFFFFF;
+    }
+    html { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+    [x-cloak] { display: none !important; }
+    body { background: var(--bg); color: var(--ink); font-size: 14px; line-height: 1.5; }
+    .font-serif-zh { font-family: 'Noto Serif SC', 'Songti SC', serif; letter-spacing: 0.02em; }
+    .font-mono    { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+    /* "GaoYao" wordmark */
+    .wordmark { font-family: 'Noto Serif SC', serif; font-weight: 700; letter-spacing: 0.04em; }
+
+    /* topbar */
+    .topbar { background: var(--paper); border-bottom: 1px solid var(--line); }
+    .topbar-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 32px; }
+    .nav-pill { padding: 6px 14px; font-size: 13px; color: var(--ink-2); border-radius: 999px; transition: all 0.15s; }
+    .nav-pill:hover { background: var(--line-2); color: var(--ink); }
+    .nav-pill.active { background: var(--ink); color: white; }
+    .btn-primary { background: var(--hw-red); color: white; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; transition: all 0.15s; }
+    .btn-primary:hover { background: var(--hw-red-2); }
+
+    /* side rail */
+    .rail { position: sticky; top: 24px; align-self: start; }
+    .rail-section { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 20px; margin-bottom: 8px; padding: 0 12px; }
+    .rail-link { display: block; padding: 9px 14px; border-radius: 6px; font-size: 14.5px; color: var(--ink-2); transition: all 0.12s; }
+    .rail-link:hover { background: var(--line-2); color: var(--ink); }
+    .rail-link.active { background: rgba(185,28,28,0.08); color: var(--hw-red); font-weight: 600; box-shadow: inset 2px 0 0 var(--hw-red); }
+
+    /* cards */
+    .card { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; }
+    .card-tight { padding: 16px 20px; }
+    .card-pad   { padding: 24px 28px; }
+
+    /* heading rhythm */
+    h1.page { font-family: 'Noto Serif SC', serif; font-size: 28px; font-weight: 700; letter-spacing: -0.005em; color: var(--ink); margin: 0; }
+    .page-lede { font-size: 14px; color: var(--muted); margin-top: 6px; line-height: 1.55; max-width: 80ch; }
+
+    /* tables */
+    table.lb { border-collapse: separate; border-spacing: 0; width: 100%; }
+    table.lb th, table.lb td { padding: 9px 14px; font-size: 13px; vertical-align: middle; }
+    table.lb thead th { font-weight: 600; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); background: var(--line-2); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 1; }
+    table.lb tbody tr:hover { background: rgba(185,28,28,0.025); }
+    table.lb tbody tr + tr td { border-top: 1px solid var(--line-2); }
+    .score-cell { font-variant-numeric: tabular-nums; }
+    .score-top { font-weight: 700; color: var(--hw-red); }
+
+    /* pills */
+    .pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 11px; font-weight: 500; border-radius: 999px; line-height: 1.4; }
+    .pill-open    { background: #ECFDF5; color: #047857; }
+    .pill-closed  { background: #F4F4F5; color: #52525B; }
+    .pill-judge   { background: #FEF3C7; color: #92400E; }
+    .pill-think   { background: #FAF5FF; color: #6B21A8; }
+    .pill-tier-H  { background: #ECFDF5; color: #047857; }
+    .pill-tier-M  { background: #FEFCE8; color: #854D0E; }
+    .pill-tier-L  { background: #FEE2E2; color: #991B1B; }
+
+    /* score bar */
+    .bar-track { background: var(--line-2); border-radius: 3px; height: 8px; overflow: hidden; }
+    .bar-fill  { background: var(--hw-red); height: 100%; border-radius: 3px; }
+
+    /* footer */
+    footer { background: var(--paper); border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0; font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <!-- data-cutoff banner -->
+  <div style="background: linear-gradient(90deg, #FEF2F2 0%, #FFFFFF 60%); border-bottom: 1px solid #FCE7E7;">
+    <div class="mx-auto px-6 lg:px-10 py-1.5 flex items-center gap-2 text-xs" style="max-width: 1680px; color: #7F1D1D;">
+      <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: var(--hw-red);"></span>
+      <span><b>Data cutoff</b> · November 2025</span>
+      <span class="text-gray-400 ml-1">— newly submitted models appear after admin review</span>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="topbar-inner max-w-none">
+      <a href="/gaoyao-leaderboard/" class="flex items-center gap-3">
+        <span class="inline-block w-1 h-9" style="background: var(--hw-red);"></span>
+        <span>
+          <div class="wordmark text-xl text-black">皋陶 · GaoYao</div>
+          <div class="text-[11px] text-gray-500 -mt-1">Multilingual & Multicultural LLM Leaderboard · ACL 2026</div>
+        </span>
+      </a>
+      <nav class="flex items-center gap-2">
+        <a href="https://arxiv.org/abs/2604.20225" class="nav-pill">Paper</a>
+        <a href="https://github.com/lunyiliu/GaoYao" class="nav-pill">GitHub</a>
+        <a href="/gaoyao-leaderboard/about.html" class="nav-pill ">About</a>
+        <!-- language toggle -->
+        <a href="/gaoyao-leaderboard/zh/model/gpt-4o.html" class="nav-pill" title="Switch language">中文</a>
+        
+      </nav>
+    </div>
+  </header>
+
+  <div class="mx-auto px-6 lg:px-10 py-8 grid grid-cols-1 md:grid-cols-12 gap-8" style="max-width: 1680px;">
+    <aside class="md:col-span-3 lg:col-span-2 rail">
+      <div class="rail-section">Views</div>
+      
+      <a href="/gaoyao-leaderboard/" class="rail-link ">Overall</a>
+      <a href="/gaoyao-leaderboard/by-language.html" class="rail-link ">By Language</a>
+      <a href="/gaoyao-leaderboard/cultural-layer.html" class="rail-link ">3-Layer Framework</a>
+
+      <div class="rail-section">Insights</div>
+      <a href="/gaoyao-leaderboard/finding/f1.html" class="rail-link ">Specialization</a>
+      <a href="/gaoyao-leaderboard/finding/f2.html" class="rail-link ">Language Divide</a>
+      <a href="/gaoyao-leaderboard/finding/f3.html" class="rail-link ">Saturation</a>
+      <a href="/gaoyao-leaderboard/finding/f4.html" class="rail-link ">Thinking Gain</a>
+
+      <div class="rail-section">More</div>
+      <a href="/gaoyao-leaderboard/about.html" class="rail-link ">About</a>
+
+      <div class="mt-8 px-2 text-[11px] text-gray-500 leading-relaxed">
+        <p><b class="text-gray-700">26 languages · 51 nations</b></p>
+        <p class="mt-1">10 sub-layers · 3 cultural layers</p>
+        <p class="mt-2">Auto-eval covers the 5 truly objective sub-tasks; subjective and culturally-grounded sets require a judge LLM and are run by the maintainers. New submissions appear after admin review.</p>
+      </div>
+    </aside>
+
+    <main class="md:col-span-9 lg:col-span-10 min-w-0">
+      
+<div class="mb-4">
+  <a href="/gaoyao-leaderboard/" class="text-xs text-gray-500 hover:text-gray-800 hover:underline">← Back to leaderboard</a>
+</div>
+
+<div class="card card-pad mb-6">
+  <div class="flex items-start justify-between">
+    <div>
+      <h1 class="page">GPT-4o</h1>
+      <div class="text-sm text-gray-500 mt-1.5 flex gap-3 items-center flex-wrap">
+        <span>OpenAI</span>
+        
+        <span class="pill pill-closed">api</span>
+        
+        
+      </div>
+    </div>
+    <div class="text-right">
+      <div class="text-3xl font-bold" style="color: var(--hw-red);">70.2</div>
+      <div class="text-xs text-gray-500">Overall · #16</div>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+  <div class="lg:col-span-2 card card-pad">
+    <h2 class="font-semibold mb-3">Sub-Layer  (0–100)</h2>
+    <div class="space-y-1.5">
+      
+      
+      <div class="flex items-center gap-3 text-sm">
+        <div class="w-44 text-gray-700">Math</div>
+        <div class="flex-1 bg-gray-100 h-3 rounded overflow-hidden">
+          <div style="width: 90.15%; background: var(--hw-red); height: 100%;"></div>
+        </div>
+        <div class="w-12 text-right tabular-nums font-medium">90.2</div>
+      </div>
+      
+      
+      <div class="flex items-center gap-3 text-sm">
+        <div class="w-44 text-gray-700">Reasoning</div>
+        <div class="flex-1 bg-gray-100 h-3 rounded overflow-hidden">
+          <div style="width: 79.46%; background: var(--hw-red); height: 100%;"></div>
+        </div>
+        <div class="w-12 text-right tabular-nums font-medium">79.5</div>
+      </div>
+      
+      
+      <div class="flex items-center gap-3 text-sm">
+        <div class="w-44 text-gray-700">Knowledge</div>
+        <div class="flex-1 bg-gray-100 h-3 rounded overflow-hidden">
+          <div style="width: 79.23%; background: var(--hw-red); height: 100%;"></div>
+        </div>
+        <div class="w-12 text-right tabular-nums font-medium">79.2</div>
+      </div>
+      
+      
+      <div class="flex items-center gap-3 text-sm">
+        <div class="w-44 text-gray-700">Instruction Following</div>
+        <div class="flex-1 bg-gray-100 h-3 rounded overflow-hidden">
+          <div style="width: 7.33%; background: var(--hw-red); height: 100%;"></div>
+        </div>
+        <div class="w-12 text-right tabular-nums font-medium">7.3</div>
+      </div>
+      
+      
+      <div class="flex items-center gap-3 text-sm">
+        <div class="w-44 text-gray-700">Dialogue</div>
+        <div class="flex-1 bg-gray-100 h-3 rounded overflow-hidden">
+          <div style="width: 19.85%; background: var(--hw-red); height: 100%;"></div>
+        </div>
+        <div class="w-12 text-right tabular-nums font-medium">19.9</div>
+      </div>
+      
+      
+      <div class="flex items-center gap-3 text-sm">
+        <div class="w-44 text-gray-700">Reading</div>
+        <div class="flex-1 bg-gray-100 h-3 rounded overflow-hidden">
+          <div style="width: 92.37%; background: var(--hw-red); height: 100%;"></div>
+        </div>
+        <div class="w-12 text-right tabular-nums font-medium">92.4</div>
+      </div>
+      
+      
+      <div class="flex items-center gap-3 text-sm">
+        <div class="w-44 text-gray-700">Translation</div>
+        <div class="flex-1 bg-gray-100 h-3 rounded overflow-hidden">
+          <div style="width: 87.46%; background: var(--hw-red); height: 100%;"></div>
+        </div>
+        <div class="w-12 text-right tabular-nums font-medium">87.5</div>
+      </div>
+      
+      
+      <div class="flex items-center gap-3 text-sm">
+        <div class="w-44 text-gray-700">Cross-Culture (SA)</div>
+        <div class="flex-1 bg-gray-100 h-3 rounded overflow-hidden">
+          <div style="width: 90.2%; background: var(--hw-red); height: 100%;"></div>
+        </div>
+        <div class="w-12 text-right tabular-nums font-medium">90.2</div>
+      </div>
+      
+      
+      <div class="flex items-center gap-3 text-sm">
+        <div class="w-44 text-gray-700">Cross-Culture (SB)</div>
+        <div class="flex-1 bg-gray-100 h-3 rounded overflow-hidden">
+          <div style="width: 72.61%; background: var(--hw-red); height: 100%;"></div>
+        </div>
+        <div class="w-12 text-right tabular-nums font-medium">72.6</div>
+      </div>
+      
+      
+      <div class="flex items-center gap-3 text-sm">
+        <div class="w-44 text-gray-700">Mono-Culture (CS)</div>
+        <div class="flex-1 bg-gray-100 h-3 rounded overflow-hidden">
+          <div style="width: 83.15%; background: var(--hw-red); height: 100%;"></div>
+        </div>
+        <div class="w-12 text-right tabular-nums font-medium">83.2</div>
+      </div>
+      
+    </div>
+  </div>
+
+  <div class="card card-pad text-sm">
+    <h2 class="font-semibold mb-2">vs. same-size peers (9)</h2>
+    <div class="text-xs text-gray-500 mb-3">Δ in points vs peer average</div>
+    <div class="mb-3">
+      <div class="text-xs font-semibold text-green-700 uppercase tracking-wider mb-1">Strongest vs peers</div>
+      
+      <div class="flex justify-between py-0.5">
+        <span>Translation</span>
+        <span class="tabular-nums text-green-700">+0.6</span>
+      </div>
+      
+      <div class="flex justify-between py-0.5">
+        <span>Cross-Culture (SB)</span>
+        <span class="tabular-nums text-green-700">+0.0</span>
+      </div>
+      
+      <div class="flex justify-between py-0.5">
+        <span>Reading</span>
+        <span class="tabular-nums text-amber-700">-1.5</span>
+      </div>
+      
+      
+    </div>
+    <div>
+      <div class="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-1">Weakest vs peers</div>
+      
+      <div class="flex justify-between py-0.5">
+        <span>Dialogue</span>
+        <span class="tabular-nums text-red-700">-32.0</span>
+      </div>
+      
+      <div class="flex justify-between py-0.5">
+        <span>Instruction Following</span>
+        <span class="tabular-nums text-red-700">-27.9</span>
+      </div>
+      
+      <div class="flex justify-between py-0.5">
+        <span>Mono-Culture (CS)</span>
+        <span class="tabular-nums text-red-700">-9.8</span>
+      </div>
+      
+      
+    </div>
+  </div>
+</div>
+
+<div class="card card-pad">
+  <h2 class="font-semibold mb-2">Dataset × Language Heatmap</h2>
+  <div id="heat" style="height: 460px;"></div>
+  <p class="text-xs text-gray-500 mt-2">Each cell = score 0–100. White / blank = no data. Hover for details.</p>
+</div>
+
+<script>
+  const d = {"datasets": ["Belebele", "Cross-Cultural", "Flores-101", "INCLUDE", "M3Exam", "MGSM", "MMMLU", "Mono-Cultural", "S-AlpacaEval", "S-MT-Bench", "SuperBLEnD"], "languages": ["Arabic", "Bengali", "Chinese", "Czech", "Dutch", "English", "French", "German", "Greek", "Hindi", "Indonesian", "Italian", "Japanese", "Korean", "Malay", "Polish", "Portuguese", "Russian", "Spanish", "Swahili", "Tagalog", "Telugu", "Thai", "Turkish", "Vietnamese", "Yoruba"], "matrix": [[93.4, null, 93.3, 93.0, 92.7, 95.4, 94.2, 93.2, 92.3, null, 93.1, 92.1, 90.6, 90.4, 92.3, 92.6, 93.7, 92.8, 92.3, null, 92.2, null, 88.4, 89.4, 92.0, null], [null, null, 88.7, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 91.7, null, null, null, null, null, null, null], [86.8, null, 88.2, 89.8, 87.1, 88.2, 88.1, 88.2, 80.4, null, 89.4, 88.1, 89.4, 88.3, 87.7, 88.3, 89.0, 88.4, 86.9, null, 85.7, null, 88.2, 82.1, 88.4, null], [75.9, null, 78.7, null, 84.9, null, 83.5, 65.5, 79.2, null, 77.8, 87.4, 93.4, 75.2, 81.4, 75.9, 74.0, 74.1, 82.7, null, 87.8, null, null, 66.2, 82.4, null], [85.5, null, 80.1, 85.1, 87.0, 89.5, 87.1, 85.8, 85.0, null, 86.7, 84.6, 85.3, 82.6, 86.0, 86.7, 83.2, 86.2, 86.5, null, 85.0, null, 82.0, 83.8, 82.1, null], [null, 91.2, 88.0, null, null, 96.8, 85.6, 90.8, null, null, null, null, 87.6, null, null, null, null, 93.2, 90.4, 90.8, null, 86.0, 91.2, null, null, null], [80.8, 78.8, 81.1, null, null, null, 83.0, 81.7, null, 78.7, 84.5, 84.3, 81.1, 79.7, null, null, 83.6, null, 83.7, 74.2, null, null, null, null, null, 57.1], [null, null, 77.6, null, null, 86.3, null, null, null, null, null, null, null, null, null, null, null, null, 85.5, null, null, null, null, null, null, null], [6.8, null, null, 5.6, 8.7, null, 9.1, 8.1, 7.5, null, 9.5, 7.0, 5.0, 5.8, 6.0, 9.8, 9.3, 7.9, 7.5, null, 9.5, null, 3.3, 8.5, 4.2, null], [26.0, null, null, 22.9, 24.0, null, 14.6, 16.7, 43.8, null, 17.7, 17.7, 17.7, 14.6, 14.6, 19.8, 13.5, 18.8, 16.7, null, 22.9, null, 22.9, 22.9, 9.4, null], [null, null, null, null, null, 72.6, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null]]};
+  // build [x, y, value] array for echarts heatmap
+  const points = [];
+  d.matrix.forEach((row, y) => row.forEach((v, x) => {
+    if (v !== null) points.push([x, y, v]);
+  }));
+  const chart = echarts.init(document.getElementById('heat'));
+  chart.setOption({
+    tooltip: { position: 'top', formatter: p => `${d.languages[p.value[0]]} · ${d.datasets[p.value[1]]}<br><b>${p.value[2]}</b>` },
+    grid: { left: 110, right: 30, top: 30, bottom: 90 },
+    xAxis: { type: 'category', data: d.languages, axisLabel: { rotate: 35, fontSize: 10 } },
+    yAxis: { type: 'category', data: d.datasets, axisLabel: { fontSize: 11 } },
+    visualMap: {
+      min: 0, max: 100,
+      calculable: true, orient: 'horizontal', left: 'center', bottom: 0,
+      inRange: { color: ['#fff5f5', '#fcbcbc', '#e85a5a', '#C7000B'] },
+      textStyle: { fontSize: 10 },
+    },
+    series: [{
+      type: 'heatmap',
+      data: points,
+      label: { show: false },
+      emphasis: { itemStyle: { shadowBlur: 8, shadowColor: 'rgba(0,0,0,0.3)' } },
+    }],
+  });
+  window.addEventListener('resize', () => chart.resize());
+</script>
+
+    </main>
+  </div>
+
+  <footer>
+    <div class="mx-auto px-10 flex justify-between items-center flex-wrap gap-3" style="max-width: 1680px;">
+      <span>皋陶 GaoYao · Scores on a 0–100 scale · live-computed from raw eval results</span>
+      <span class="flex items-center gap-3 text-gray-400">
+        <span class="text-[11px]">built by</span>
+        <img src="/gaoyao-leaderboard/static/logo/prism-mark.svg?v=2" alt="PRISM" style="width: 22px; height: 22px;">
+        <span class="font-semibold tracking-widest" style="color: var(--ink-2);">PRISM</span>
+      </span>
+    </div>
+  </footer>
+</body>
+</html>

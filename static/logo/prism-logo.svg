@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" width="640" height="240" font-family="Inter, 'Noto Sans CJK TC', 'Noto Sans', 'DejaVu Sans', 'Droid Sans', sans-serif">
+  <rect width="640" height="240" fill="#ffffff"/>
+
+  <!-- ── icon block ── -->
+  <g transform="translate(0,30)">
+
+    <!-- incoming white-light beam (top-left → prism left face midpoint) -->
+    <line x1="40" y1="50" x2="148" y2="92" stroke="#1f1f1f" stroke-width="1.6" stroke-linecap="round"/>
+
+    <!-- glass prism triangle (apex up, equilateral) -->
+    <polygon points="148,140 230,28 230,140" fill="#fafafa" stroke="#1f1f1f" stroke-width="2.8" stroke-linejoin="round"/>
+    <!-- subtle inner highlight -->
+    <line x1="156" y1="135" x2="222" y2="38" stroke="#e4e4e7" stroke-width="1"/>
+
+    <!-- spectrum exiting right side, 7 rays fanned -->
+    <g stroke-width="2.8" stroke-linecap="round" fill="none">
+      <line x1="230" y1="95"  x2="378" y2="36"  stroke="#B91C1C"/>
+      <line x1="230" y1="100" x2="384" y2="58"  stroke="#EA580C"/>
+      <line x1="230" y1="104" x2="388" y2="82"  stroke="#CA8A04"/>
+      <line x1="230" y1="108" x2="390" y2="106" stroke="#15803D"/>
+      <line x1="230" y1="112" x2="388" y2="130" stroke="#0E7490"/>
+      <line x1="230" y1="116" x2="384" y2="154" stroke="#1D4ED8"/>
+      <line x1="230" y1="120" x2="378" y2="176" stroke="#6B21A8"/>
+    </g>
+
+    <!-- spectrum tips morph into glyphs from different scripts -->
+    <g font-size="20" font-weight="600" text-anchor="start" dominant-baseline="middle">
+      <text x="386" y="34"  fill="#B91C1C">汉</text>
+      <text x="392" y="56"  fill="#EA580C">A</text>
+      <text x="396" y="80"  fill="#CA8A04">あ</text>
+      <text x="398" y="105" fill="#15803D">ع</text>
+      <text x="396" y="130" fill="#0E7490">क</text>
+      <text x="392" y="154" fill="#1D4ED8">한</text>
+      <text x="386" y="178" fill="#6B21A8">中</text>
+    </g>
+  </g>
+
+  <!-- ── wordmark block ── -->
+  <g>
+    <text x="40" y="220" font-size="40" font-weight="700" letter-spacing="10" fill="#18181B">PRISM</text>
+    <text x="218" y="220" font-size="40" font-weight="300" letter-spacing="1" fill="#71717A">/ 析光</text>
+    <text x="42" y="232" font-size="9" letter-spacing="2.6" fill="#A1A1AA">M U L T I L I N G U A L &#160;&#160;·&#160;&#160; L L M  &#160;·&#160;  R E S E A R C H</text>
+  </g>
+</svg>

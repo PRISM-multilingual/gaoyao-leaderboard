@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Thinking Gain · GaoYao</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="/gaoyao-leaderboard/static/logo/favicon.png?v=2">
+  <style>
+    :root {
+      --hw-red:    #B91C1C;   /* deeper, less saturated than HW red */
+      --hw-red-2:  #7F1D1D;
+      --ink:       #18181B;
+      --ink-2:     #3F3F46;
+      --muted:     #71717A;
+      --line:      #E4E4E7;
+      --line-2:    #F4F4F5;
+      --bg:        #FAFAF9;
+      --paper:     #FFFFFF;
+    }
+    html { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+    [x-cloak] { display: none !important; }
+    body { background: var(--bg); color: var(--ink); font-size: 14px; line-height: 1.5; }
+    .font-serif-zh { font-family: 'Noto Serif SC', 'Songti SC', serif; letter-spacing: 0.02em; }
+    .font-mono    { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+    /* "GaoYao" wordmark */
+    .wordmark { font-family: 'Noto Serif SC', serif; font-weight: 700; letter-spacing: 0.04em; }
+
+    /* topbar */
+    .topbar { background: var(--paper); border-bottom: 1px solid var(--line); }
+    .topbar-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 32px; }
+    .nav-pill { padding: 6px 14px; font-size: 13px; color: var(--ink-2); border-radius: 999px; transition: all 0.15s; }
+    .nav-pill:hover { background: var(--line-2); color: var(--ink); }
+    .nav-pill.active { background: var(--ink); color: white; }
+    .btn-primary { background: var(--hw-red); color: white; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; transition: all 0.15s; }
+    .btn-primary:hover { background: var(--hw-red-2); }
+
+    /* side rail */
+    .rail { position: sticky; top: 24px; align-self: start; }
+    .rail-section { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 20px; margin-bottom: 8px; padding: 0 12px; }
+    .rail-link { display: block; padding: 9px 14px; border-radius: 6px; font-size: 14.5px; color: var(--ink-2); transition: all 0.12s; }
+    .rail-link:hover { background: var(--line-2); color: var(--ink); }
+    .rail-link.active { background: rgba(185,28,28,0.08); color: var(--hw-red); font-weight: 600; box-shadow: inset 2px 0 0 var(--hw-red); }
+
+    /* cards */
+    .card { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; }
+    .card-tight { padding: 16px 20px; }
+    .card-pad   { padding: 24px 28px; }
+
+    /* heading rhythm */
+    h1.page { font-family: 'Noto Serif SC', serif; font-size: 28px; font-weight: 700; letter-spacing: -0.005em; color: var(--ink); margin: 0; }
+    .page-lede { font-size: 14px; color: var(--muted); margin-top: 6px; line-height: 1.55; max-width: 80ch; }
+
+    /* tables */
+    table.lb { border-collapse: separate; border-spacing: 0; width: 100%; }
+    table.lb th, table.lb td { padding: 9px 14px; font-size: 13px; vertical-align: middle; }
+    table.lb thead th { font-weight: 600; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); background: var(--line-2); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 1; }
+    table.lb tbody tr:hover { background: rgba(185,28,28,0.025); }
+    table.lb tbody tr + tr td { border-top: 1px solid var(--line-2); }
+    .score-cell { font-variant-numeric: tabular-nums; }
+    .score-top { font-weight: 700; color: var(--hw-red); }
+
+    /* pills */
+    .pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 11px; font-weight: 500; border-radius: 999px; line-height: 1.4; }
+    .pill-open    { background: #ECFDF5; color: #047857; }
+    .pill-closed  { background: #F4F4F5; color: #52525B; }
+    .pill-judge   { background: #FEF3C7; color: #92400E; }
+    .pill-think   { background: #FAF5FF; color: #6B21A8; }
+    .pill-tier-H  { background: #ECFDF5; color: #047857; }
+    .pill-tier-M  { background: #FEFCE8; color: #854D0E; }
+    .pill-tier-L  { background: #FEE2E2; color: #991B1B; }
+
+    /* score bar */
+    .bar-track { background: var(--line-2); border-radius: 3px; height: 8px; overflow: hidden; }
+    .bar-fill  { background: var(--hw-red); height: 100%; border-radius: 3px; }
+
+    /* footer */
+    footer { background: var(--paper); border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0; font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <!-- data-cutoff banner -->
+  <div style="background: linear-gradient(90deg, #FEF2F2 0%, #FFFFFF 60%); border-bottom: 1px solid #FCE7E7;">
+    <div class="mx-auto px-6 lg:px-10 py-1.5 flex items-center gap-2 text-xs" style="max-width: 1680px; color: #7F1D1D;">
+      <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: var(--hw-red);"></span>
+      <span><b>Data cutoff</b> · November 2025</span>
+      <span class="text-gray-400 ml-1">— newly submitted models appear after admin review</span>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="topbar-inner max-w-none">
+      <a href="/gaoyao-leaderboard/" class="flex items-center gap-3">
+        <span class="inline-block w-1 h-9" style="background: var(--hw-red);"></span>
+        <span>
+          <div class="wordmark text-xl text-black">皋陶 · GaoYao</div>
+          <div class="text-[11px] text-gray-500 -mt-1">Multilingual & Multicultural LLM Leaderboard · ACL 2026</div>
+        </span>
+      </a>
+      <nav class="flex items-center gap-2">
+        <a href="https://arxiv.org/abs/2604.20225" class="nav-pill">Paper</a>
+        <a href="https://github.com/lunyiliu/GaoYao" class="nav-pill">GitHub</a>
+        <a href="/gaoyao-leaderboard/about.html" class="nav-pill ">About</a>
+        <!-- language toggle -->
+        <a href="/gaoyao-leaderboard/zh/finding/f4.html" class="nav-pill" title="Switch language">中文</a>
+        
+      </nav>
+    </div>
+  </header>
+
+  <div class="mx-auto px-6 lg:px-10 py-8 grid grid-cols-1 md:grid-cols-12 gap-8" style="max-width: 1680px;">
+    <aside class="md:col-span-3 lg:col-span-2 rail">
+      <div class="rail-section">Views</div>
+      
+      <a href="/gaoyao-leaderboard/" class="rail-link ">Overall</a>
+      <a href="/gaoyao-leaderboard/by-language.html" class="rail-link ">By Language</a>
+      <a href="/gaoyao-leaderboard/cultural-layer.html" class="rail-link ">3-Layer Framework</a>
+
+      <div class="rail-section">Insights</div>
+      <a href="/gaoyao-leaderboard/finding/f1.html" class="rail-link ">Specialization</a>
+      <a href="/gaoyao-leaderboard/finding/f2.html" class="rail-link ">Language Divide</a>
+      <a href="/gaoyao-leaderboard/finding/f3.html" class="rail-link ">Saturation</a>
+      <a href="/gaoyao-leaderboard/finding/f4.html" class="rail-link active">Thinking Gain</a>
+
+      <div class="rail-section">More</div>
+      <a href="/gaoyao-leaderboard/about.html" class="rail-link ">About</a>
+
+      <div class="mt-8 px-2 text-[11px] text-gray-500 leading-relaxed">
+        <p><b class="text-gray-700">26 languages · 51 nations</b></p>
+        <p class="mt-1">10 sub-layers · 3 cultural layers</p>
+        <p class="mt-2">Auto-eval covers the 5 truly objective sub-tasks; subjective and culturally-grounded sets require a judge LLM and are run by the maintainers. New submissions appear after admin review.</p>
+      </div>
+    </aside>
+
+    <main class="md:col-span-9 lg:col-span-10 min-w-0">
+      
+<div class="mb-6">
+  <h1 class="page">Uneven Thinking Gain</h1>
+  <p class="page-lede">Inference-time &#39;thinking&#39; mode boosts compact models universally; for flagships it only helps on creative / open-ended layers (Instruction Following · Dialogue).</p>
+</div>
+
+<div class="card card-pad mb-5">
+  <div id="bar" style="height: 460px;"></div>
+  <p class="text-xs text-gray-500 mt-2">
+    Δ% = (think − no_think) / no_think × 100. Positive = thinking helps.
+  </p>
+</div>
+
+<!-- side-by-side table for clarity -->
+<div class="card overflow-x-auto">
+  <table class="lb w-full" style="font-size: 12px;">
+    <thead>
+      <tr>
+        <th>Family</th>
+        <th class="text-xs text-gray-500">no-think → think</th>
+        
+        <th class="text-right" style="font-size: 10px;">Math</th>
+        
+        <th class="text-right" style="font-size: 10px;">Reasoning</th>
+        
+        <th class="text-right" style="font-size: 10px;">Knowledge</th>
+        
+        <th class="text-right" style="font-size: 10px;">Instruct</th>
+        
+        <th class="text-right" style="font-size: 10px;">Dialogue</th>
+        
+        <th class="text-right" style="font-size: 10px;">Reading</th>
+        
+        <th class="text-right" style="font-size: 10px;">Translation</th>
+        
+        <th class="text-right" style="font-size: 10px;">Cross SA</th>
+        
+        <th class="text-right" style="font-size: 10px;">Cross SB</th>
+        
+        <th class="text-right" style="font-size: 10px;">Mono CS</th>
+        
+      </tr>
+    </thead>
+    <tbody>
+      
+      <tr>
+        <td class="font-medium">Qwen3-8B</td>
+        <td class="text-xs text-gray-500">Qwen3-8B（no think） → Qwen3-8B（think）</td>
+        
+          
+          
+            <td class="text-right tabular-nums text-green-700 font-medium">+7.5</td>
+          
+        
+          
+          
+            <td class="text-right tabular-nums text-green-700 font-medium">+15.2</td>
+          
+        
+          
+          
+            <td class="text-right tabular-nums text-green-700 font-medium">+13.8</td>
+          
+        
+          
+          
+            <td class="text-right tabular-nums text-green-700 font-medium">+110.5</td>
+          
+        
+          
+          
+            <td class="text-right tabular-nums text-green-700 font-medium">+57.4</td>
+          
+        
+          
+          
+            <td class="text-right tabular-nums text-green-700 font-medium">+8.2</td>
+          
+        
+          
+          
+            <td class="text-right tabular-nums text-gray-500">+0.0</td>
+          
+        
+          
+          
+            <td class="text-right tabular-nums text-gray-500">+4.1</td>
+          
+        
+          
+          
+            <td class="text-right tabular-nums text-green-700 font-medium">+10.1</td>
+          
+        
+          
+          
+            <td class="text-right tabular-nums text-gray-500">+2.2</td>
+          
+        
+      </tr>
+      
+      <tr>
+        <td class="font-medium">Doubao-Seed-1.6</td>
+        <td class="text-xs text-gray-500">doubao-seed-1-6-250615 → doubao-seed-1-6-thinking</td>
+        
+          
+          
+            <td class="text-right tabular-nums text-gray-500">-0.1</td>
+          
+        
+          
+          
+            <td class="text-right tabular-nums text-gray-500">-0.6</td>
+          
+        
+          
+          
+            <td class="text-right tabular-nums text-gray-500">-0.0</td>
+          
+        
+          
+          
+            <td class="text-right tabular-nums text-green-700 font-medium">+21.8</td>
+          
+        
+          
+          
+            <td class="text-right tabular-nums text-green-700 font-medium">+24.8</td>
+          
+        
+          
+          
+            <td class="text-right tabular-nums text-gray-500">-0.0</td>
+          
+        
+          
+          
+            <td class="text-right tabular-nums text-gray-500">-1.9</td>
+          
+        
+          
+          
+            <td class="text-right tabular-nums text-gray-500">+3.3</td>
+          
+        
+          
+          
+            <td class="text-right tabular-nums text-gray-500">-0.2</td>
+          
+        
+          
+          
+            <td class="text-right tabular-nums text-gray-500">+0.2</td>
+          
+        
+      </tr>
+      
+    </tbody>
+  </table>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-5">
+  <div class="card card-pad" style="background: #FAFBFD;">
+    <div class="font-semibold mb-1" style="color: #3B82F6;">Compact models — universal gain</div>
+    <p class="text-xs text-gray-700">Qwen3-8B (think) lifts every sub-layer; instruction-following and dialogue surge (+110%, +57%). Thinking compensates for limited parameters.</p>
+  </div>
+  <div class="card card-pad" style="background: #FDF7F8;">
+    <div class="font-semibold mb-1" style="color: var(--hw-red);">Flagship models — selective gain</div>
+    <p class="text-xs text-gray-700">Doubao-Seed-1.6 (thinking) only meaningfully improves the open-ended Evaluate &amp; Create tier (Instruction Following +22%, Dialogue +25%); other sub-layers stay flat or slip slightly.</p>
+  </div>
+</div>
+
+<script>
+  const data = {"sub_layers": ["Math", "Reasoning", "Knowledge", "Instruction Following", "Dialogue", "Reading", "Translation", "Cross-Culture (SA)", "Cross-Culture (SB)", "Mono-Culture (CS)"], "series": [{"family": "Qwen3-8B", "data": [7.45, 15.21, 13.84, 110.54, 57.43, 8.24, 0.0, 4.1, 10.08, 2.16]}, {"family": "Doubao-Seed-1.6", "data": [-0.12, -0.61, -0.01, 21.79, 24.8, -0.01, -1.87, 3.28, -0.18, 0.21]}]};
+  const FAMILY_COLORS = {
+    'Qwen3-8B':        '#3B82F6',
+    'Doubao-Seed-1.6': '#B91C1C',
+  };
+  const chart = echarts.init(document.getElementById('bar'));
+  chart.setOption({
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    legend: { top: 0, textStyle: { fontSize: 12 } },
+    grid: { left: 50, right: 20, top: 36, bottom: 96 },
+    xAxis: {
+      type: 'category', data: data.sub_layers,
+      axisLabel: { rotate: 28, interval: 0, fontSize: 11 },
+    },
+    yAxis: { type: 'value', name: 'Δ%', nameTextStyle: { color: '#71717A', fontSize: 11 } },
+    series: data.series.map(s => ({
+      name: s.family,
+      type: 'bar',
+      data: s.data,
+      itemStyle: { color: FAMILY_COLORS[s.family] || '#6B7280' },
+      label: {
+        show: true, position: 'top', fontSize: 9,
+        color: '#52525B',
+        formatter: v => v.value === 0 ? '' : (v.value > 0 ? '+' + v.value.toFixed(0) : v.value.toFixed(0)),
+      },
+      barGap: '15%',
+    })),
+  });
+  window.addEventListener('resize', () => chart.resize());
+</script>
+
+    </main>
+  </div>
+
+  <footer>
+    <div class="mx-auto px-10 flex justify-between items-center flex-wrap gap-3" style="max-width: 1680px;">
+      <span>皋陶 GaoYao · Scores on a 0–100 scale · live-computed from raw eval results</span>
+      <span class="flex items-center gap-3 text-gray-400">
+        <span class="text-[11px]">built by</span>
+        <img src="/gaoyao-leaderboard/static/logo/prism-mark.svg?v=2" alt="PRISM" style="width: 22px; height: 22px;">
+        <span class="font-semibold tracking-widest" style="color: var(--ink-2);">PRISM</span>
+      </span>
+    </div>
+  </footer>
+</body>
+</html>
