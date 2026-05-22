@@ -96,17 +96,22 @@
 
   <header class="topbar">
     <div class="topbar-inner max-w-none">
-      <a href="/gaoyao-leaderboard/" class="flex items-center gap-3">
-        <span class="inline-block w-1 h-9" style="background: var(--hw-red);"></span>
-        <span>
-          <div class="wordmark text-xl text-black">皋陶 · GaoYao</div>
-          <div class="text-[11px] text-gray-500 -mt-1">Multilingual & Multicultural LLM Leaderboard · ACL 2026</div>
-        </span>
-      </a>
-      <nav class="flex items-center gap-2">
-        <a href="https://arxiv.org/abs/2604.20225" class="nav-pill">Paper</a>
-        <a href="https://github.com/lunyiliu/GaoYao" class="nav-pill">GitHub</a>
-        <a href="/gaoyao-leaderboard/about.html" class="nav-pill ">About</a>
+      <div class="flex items-center gap-2">
+        <button id="m-nav-btn" class="md:hidden p-1.5 -ml-1 rounded hover:bg-gray-100" aria-label="Menu" type="button">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        </button>
+        <a href="/gaoyao-leaderboard/" class="flex items-center gap-3">
+          <span class="inline-block w-1 h-9" style="background: var(--hw-red);"></span>
+          <span>
+            <div class="wordmark text-xl text-black">皋陶 · GaoYao</div>
+            <div class="text-[11px] text-gray-500 -mt-1 hidden sm:block">Multilingual & Multicultural LLM Leaderboard · ACL 2026</div>
+          </span>
+        </a>
+      </div>
+      <nav class="flex items-center gap-1 md:gap-2">
+        <a href="https://arxiv.org/abs/2604.20225" class="nav-pill hidden md:inline-flex">Paper</a>
+        <a href="https://github.com/lunyiliu/GaoYao" class="nav-pill hidden md:inline-flex">GitHub</a>
+        <a href="/gaoyao-leaderboard/about.html" class="nav-pill hidden md:inline-flex ">About</a>
         <!-- language toggle -->
         <a href="/gaoyao-leaderboard/zh/dataset/superblend.html" class="nav-pill" title="Switch language">中文</a>
         
@@ -114,8 +119,13 @@
     </div>
   </header>
 
-  <div class="mx-auto px-6 lg:px-10 py-8 grid grid-cols-1 md:grid-cols-12 gap-8" style="max-width: 1680px;">
-    <aside class="md:col-span-3 lg:col-span-2 rail">
+  <div id="m-nav-backdrop" class="fixed inset-0 bg-black/40 z-40 hidden md:hidden" aria-hidden="true"></div>
+
+  <div class="mx-auto px-4 sm:px-6 lg:px-10 py-6 md:py-8 grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8" style="max-width: 1680px;">
+    <aside id="m-nav-rail" class="md:col-span-3 lg:col-span-2 rail
+      fixed top-0 left-0 bottom-0 z-50 w-72 max-w-[85%] bg-white border-r border-gray-200 shadow-xl px-5 py-6 overflow-y-auto
+      md:static md:w-auto md:max-w-none md:bg-transparent md:border-0 md:shadow-none md:px-0 md:py-0 md:overflow-visible
+      -translate-x-full md:translate-x-0 transition-transform duration-200">
       <div class="rail-section">Views</div>
       
       <a href="/gaoyao-leaderboard/" class="rail-link ">Overall</a>
@@ -353,6 +363,22 @@
 
     </main>
   </div>
+
+  <script>
+  (function(){
+    var btn = document.getElementById('m-nav-btn');
+    var rail = document.getElementById('m-nav-rail');
+    var bd = document.getElementById('m-nav-backdrop');
+    if (!btn || !rail || !bd) return;
+    function open(){ bd.classList.remove('hidden'); rail.classList.remove('-translate-x-full'); document.body.style.overflow='hidden'; }
+    function close(){ bd.classList.add('hidden'); rail.classList.add('-translate-x-full'); document.body.style.overflow=''; }
+    btn.addEventListener('click', open);
+    bd.addEventListener('click', close);
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') close(); });
+    rail.addEventListener('click', function(e){ if (e.target.tagName === 'A' && window.innerWidth < 768) close(); });
+    window.addEventListener('resize', function(){ if (window.innerWidth >= 768) close(); });
+  })();
+  </script>
 
   <footer>
     <div class="mx-auto px-10 flex justify-between items-center flex-wrap gap-3" style="max-width: 1680px;">
